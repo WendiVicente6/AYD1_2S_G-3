@@ -2,22 +2,26 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+CORS(app)
 
+@app.get("/")
+def health():
+  return jsonify({
+    "status": "ok",
+    "message": "EduConnect API funcionando"
+  })
 
-@app.route("/api/health", methods=["GET"])
-def health_check():
-  return jsonify({"status": "healthy", "message": "Flask conectado con éxito"})
+@app.get("/api/dashboard")
+def dashboard():
+  return jsonify({
+      "students": 125,
+      "tutors": 38,
+      "sessions": 56,
+      "messages": 243,
+      "pending_students": 14,
+      "pending_tutors": 6
+  })
 
-
-# Ruta para simular obtención de datos
-@app.route("/api/tareas", methods=["GET"])
-def get_tareas():
-  tareas = [
-      {"id": 1, "titulo": "Aprender Flask", "completada": True},
-      {"id": 2, "titulo": "Conectar React", "completada": False},
-  ]
-  return jsonify(tareas)
 
 
 if __name__ == "__main__":
