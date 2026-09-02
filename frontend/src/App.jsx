@@ -1,9 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import DashboardLayout from "./layouts/DashboardLayout";
-import Dashboard from "./pages/Dashboard/Dashboard";
 import Login from "./pages/Login/Login";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import DashboardLayout from "./layouts/DashboardLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Placeholder from "./pages/Placeholder/Placeholder";
 import Auth2 from "./pages/Auth2/Auth2";
+
+
 
 export default function App() {
   return (
@@ -12,15 +15,40 @@ export default function App() {
       <Route path="/auth2" element={<Auth2 />} />
 
       <Route element={<DashboardLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/students" element={<Placeholder title="Estudiantes" description="Gestión y consulta de estudiantes." />} />
-        <Route path="/tutors" element={<Placeholder title="Tutores" description="Gestión y consulta de tutores." />} />
-        <Route path="/sessions" element={<Placeholder title="Sesiones" description="Gestión de sesiones de tutoría." />} />
-        <Route path="/reports" element={<Placeholder title="Reportes" description="Reportes administrativos del sistema." />} />
+        
+        <Route 
+          path="/admin/dashboard" 
+          element={<ProtectedRoute role="admin"><Dashboard title="Administrador" /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/student/dashboard" 
+          element={<ProtectedRoute role="student"><Dashboard title="Estudiante" /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/tutor/dashboard" 
+          element={<ProtectedRoute role="tutor"><Dashboard title="Tutor" /></ProtectedRoute>} 
+        />
+
+        <Route 
+          path="/students" 
+          element={<ProtectedRoute role="admin"><Placeholder title="Estudiantes" description="Gestión y consulta de estudiantes." /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/tutors" 
+          element={<ProtectedRoute role="admin"><Placeholder title="Tutores" description="Gestión y consulta de tutores." /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/sessions" 
+          element={<ProtectedRoute role="tutor"><Placeholder title="Sesiones" description="Gestión de sesiones de tutoría." /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/reports" 
+          element={<ProtectedRoute role="admin"><Placeholder title="Reportes" description="Reportes administrativos del sistema." /></ProtectedRoute>} 
+        />
       </Route>
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

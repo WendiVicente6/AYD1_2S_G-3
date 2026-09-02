@@ -1,127 +1,133 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { GraduationCap, LockKeyhole, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-export default function Login() {
-  const navigate = useNavigate();
-  const [correo, setCorreo] = useState("");
-  const [password, setPassword] = useState("");
-
-const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    const response = await fetch("http://127.0.0.1:5000/api/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        correo: correo,
-        password: password,
-      }),
-    });
-
-    const data = await response.json();
-if (!response.ok) {
-  console.error(data.error);
-  return;
-}
-
-if (data.requiere_segunda_autenticacion) {
-  navigate("/auth2");
-}
-    //console.log(data);
-  } catch (error) {
-    console.error("Error al conectar con el backend:", error);
-  }
+const dashboardForRole = {
+  admin: "/admin/dashboard",
+  student: "/student/dashboard",
+  tutor: "/tutor/dashboard",
 };
 
-  return (
-    <main className="auth-page">
-      <section className="auth-card">
+export default function Login() {
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-        <div className="auth-brand">
-          <div className="brand-mark">EC</div>
-          <span>
-            Edu<span>Connect</span>
-          </span>
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    if (!correo.trim() || !password) {
+      setError("Ingresa tu correo y contraseña.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const user = await login(correo.trim(), password);
+
+      console.log("USUARIO DESDE LOGIN:", user);
+      console.log("ROL:", user.role);
+
+      if (user.role === "admin") {
+        navigate("/auth2", { replace: true });
+      } else {
+        navigate(
+          dashboardForRole[user.role] || "/login",
+          { replace: true }
+        );
+      }
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <main className="login-page">
+      <section className="login-card">
+
+        <div className="brand">
+          <div className="brand-icon">
+            <GraduationCap size={28} />
+          </div>
+
+          <div>
+            <h1>EduConnect</h1>
+            <p>Plataforma de gestión académica</p>
+          </div>
         </div>
 
-        <h1>Iniciar sesión</h1>
+        <div className="login-heading">
+          <h2>Iniciar sesión</h2>
+          <p>Ingresa con las credenciales de tu cuenta.</p>
+        </div>
 
-        <p>
-          Ingresa tus credenciales para continuar.
-        </p>
+        {error && (
+          <div className="alert">
+            {error}
+          </div>
+        )}
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
 
-          <label>
-            Correo electrónico
+          <label>Correo electrónico</label>
+
+          <div className="input-wrap">
+            <Mail size={18} />
+
             <input
               type="email"
-              placeholder="correo@ejemplo.com"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
-              required
+              placeholder="correo@ejemplo.com"
+              autoComplete="username"
             />
-          </label>
+          </div>
 
-          <label>
-            Contraseña
+          <label>Contraseña</label>
+
+          <div className="input-wrap">
+            <LockKeyhole size={18} />
+
             <input
               type="password"
-              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required
+              placeholder="••••••••"
+              autoComplete="current-password"
             />
-          </label>
+          </div>
 
           <button
-            className="primary-button"
             type="submit"
+            disabled={loading}
           >
-            Ingresar
+            {loading ? "Ingresando..." : "Iniciar sesión"}
           </button>
 
         </form>
 
-        <small className="auth-note">
-          Autenticación de administrador — Fase 1.
-        </small>
+        <p className="login-note">
+          ¿No tienes una cuenta?
+
+          <button
+            type="button"
+            onClick={() => navigate("/register/tutor")}
+          >
+            Crear cuenta
+          </button>
+        </p>
 
       </section>
     </main>
   );
 }
-
-
-
-
-
-
-/*
-
-
-import { Link } from "react-router-dom";
-
-export default function Login() {
-  return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <div className="auth-brand"><div className="brand-mark">EC</div><span>Edu<span>Connect</span></span></div>
-        <h1>Iniciar sesión</h1>
-        <p>Ingresa tus credenciales para continuar.</p>
-        <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
-          <label>Correo electrónico<input type="email" placeholder="correo@ejemplo.com" /></label>
-          <label>Contraseña<input type="password" placeholder="••••••••" /></label>
-          <button className="primary-button" type="submit">Ingresar</button>
-        </form>
-        <small className="auth-note">Pantalla inicial de referencia. La autenticación se conectará al backend Flask.</small>
-        <Link className="back-link" to="/dashboard">Ver dashboard de demostración →</Link>
-      </section>
-    </main>
-  );
-}
-*/
