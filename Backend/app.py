@@ -34,6 +34,7 @@ load_dotenv()
 
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
+from routes.registration import registration_bp
 
 app = Flask(__name__)
 
@@ -44,6 +45,7 @@ app.config["JWT_EXPIRES_MINUTES"] = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
 
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(dashboard_bp, url_prefix="/api")
+app.register_blueprint(registration_bp)
 
 @app.get("/api/health")
 def health():
@@ -178,13 +180,5 @@ def auth2():
     }), 200
 
 if __name__ == "__main__":
+    app.run(debug=True, port=5000)
 
-
-
-#
-  # debug=True reinicia el servidor automáticamente al guardar cambios
- # app.run(debug=True, port=5000)
-  #  return {"ok": True, "service": "EduConnect API"}
-
-#if __name__ == "__main__":
-#    app.run(debug=True, port=5000)
