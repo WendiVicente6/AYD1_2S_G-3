@@ -36,7 +36,17 @@ export default function Login() {
         <div className="input-wrap"><LockKeyhole size={18}/><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="••••••••" autoComplete="current-password"/></div>
         <button type="submit" disabled={loading}>{loading ? "Ingresando..." : "Iniciar sesión"}</button>
       </form>
-      <p className="login-note">El sistema identifica automáticamente si la cuenta corresponde a estudiante, tutor o administrador.</p>
+      <p className="login-note"> ¿No tienes una cuenta?
+        <button
+            type="button"
+            onClick={() =>
+                navigate("/register/tutor")
+            }
+        >
+            Crear cuenta
+        </button>
+       </p>
+      {/*<p className="login-note">El sistema identifica automáticamente si la cuenta corresponde a estudiante, tutor o administrador.</p>*/}
     </section>
   </main>;
 }
