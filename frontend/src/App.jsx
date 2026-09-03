@@ -4,7 +4,8 @@ import Dashboard from "./pages/Dashboard/Dashboard";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Placeholder from "./pages/Placeholder/Placeholder";
-
+import RegisterStudent from "./pages/Registros/RegisterStudent";
+import RegisterTutor from "./pages/Registros/RegisterTutor";
 
 
 export default function App() {
@@ -47,6 +48,14 @@ export default function App() {
 
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route
+        path="/register/student"
+        element={<RegisterStudent />}
+      />
+      <Route
+        path="/register/tutor"
+        element={<RegisterTutor />}
+      />
     </Routes>
   );
 }
