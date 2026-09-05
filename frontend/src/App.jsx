@@ -1,42 +1,26 @@
-import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from "react-router-dom";
+import DashboardLayout from "./layouts/DashboardLayout";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import Login from "./pages/Login/Login";
+import Placeholder from "./pages/Placeholder/Placeholder";
+import Auth2 from "./pages/Auth2/Auth2";
 
-function App() {
-  const [mensajeBackend, setMensajeBackend] = useState('Cargando...');
-  const [tareas, setTareas] = useState([]);
-
-  useEffect(() => {
-    // 1. Validar conexión con el Backend
-    fetch('http://localhost:5000/api/health')
-      .then(res => res.json())
-      .then(data => setMensajeBackend(data.message))
-      .catch(err => setMensajeBackend('Error al conectar con Flask ❌'));
-
-    // 2. Traer la lista de tareas simuladas
-    fetch('http://localhost:5000/api/tareas')
-      .then(res => res.json())
-      .then(data => setTareas(data))
-      .catch(err => console.error("Error cargando tareas:", err));
-  }, []);
-
+export default function App() {
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Proyecto React + Flask 🚀</h1>
-      
-      {/* Estado de la conexión */}
-      <p><strong>Estado del Backend:</strong> {mensajeBackend}</p>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/auth2" element={<Auth2 />} />
 
-      <hr />
+      <Route element={<DashboardLayout />}>
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/students" element={<Placeholder title="Estudiantes" description="Gestión y consulta de estudiantes." />} />
+        <Route path="/tutors" element={<Placeholder title="Tutores" description="Gestión y consulta de tutores." />} />
+        <Route path="/sessions" element={<Placeholder title="Sesiones" description="Gestión de sesiones de tutoría." />} />
+        <Route path="/reports" element={<Placeholder title="Reportes" description="Reportes administrativos del sistema." />} />
+      </Route>
 
-      <h2>Lista de tareas desde la API:</h2>
-      <ul>
-        {tareas.map(tarea => (
-          <li key={tarea.id} style={{ textDecoration: tarea.completada ? 'line-through' : 'none' }}>
-            {tarea.titulo}
-          </li>
-        ))}
-      </ul>
-    </div>
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   );
 }
-
-export default App;
