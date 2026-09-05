@@ -1,11 +1,14 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login/Login";
-import Dashboard from "./pages/Dashboard/Dashboard";
+import AdminDashboard from "./pages/Dashboard/AdminDashboard";
+import TutorDashboard from "./pages/Dashboard/TutorDashboard";
+import StudentDashboard from "./pages/Dashboard/StudentDashboard";
 import DashboardLayout from "./layouts/DashboardLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Placeholder from "./pages/Placeholder/Placeholder";
 import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
+import SetSchedule from "./pages/Horarios/SetSchedule";
 
 
 export default function App() {
@@ -17,15 +20,19 @@ export default function App() {
         
         <Route 
           path="/admin/dashboard" 
-          element={<ProtectedRoute role="admin"><Dashboard title="Administrador" /></ProtectedRoute>} 
+          element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} 
         />
         <Route 
           path="/student/dashboard" 
-          element={<ProtectedRoute role="student"><Dashboard title="Estudiante" /></ProtectedRoute>} 
+          element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} 
         />
         <Route 
           path="/tutor/dashboard" 
-          element={<ProtectedRoute role="tutor"><Dashboard title="Tutor" /></ProtectedRoute>} 
+          element={<ProtectedRoute role="tutor"><TutorDashboard /></ProtectedRoute>} 
+        />
+        <Route 
+          path="/tutor/schedule" 
+          element={<ProtectedRoute role="tutor"><SetSchedule /></ProtectedRoute>} 
         />
 
         <Route 
