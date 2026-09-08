@@ -9,7 +9,7 @@ import Placeholder from "./pages/Placeholder/Placeholder";
 import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
 import SetSchedule from "./pages/Horarios/SetSchedule";
-
+import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 
 export default function App() {
   return (
@@ -17,39 +17,45 @@ export default function App() {
       <Route path="/login" element={<Login />} />
 
       <Route element={<DashboardLayout />}>
+
+        <Route
+          path="/admin/dashboard"
+          element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>}
+        />
+        <Route
+          path="/student/dashboard"
+          element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
+        />
         
-        <Route 
-          path="/admin/dashboard" 
-          element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} 
-        />
-        <Route 
-          path="/student/dashboard" 
-          element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>} 
-        />
-        <Route 
-          path="/tutor/dashboard" 
-          element={<ProtectedRoute role="tutor"><TutorDashboard /></ProtectedRoute>} 
-        />
-        <Route 
-          path="/tutor/schedule" 
-          element={<ProtectedRoute role="tutor"><SetSchedule /></ProtectedRoute>} 
+        <Route
+          path="/student/programar-sesion"
+          element={<ProtectedRoute role="student"><ProgramarSesion /></ProtectedRoute>}
         />
 
-        <Route 
-          path="/students" 
-          element={<ProtectedRoute role="admin"><Placeholder title="Estudiantes" description="Gestión y consulta de estudiantes." /></ProtectedRoute>} 
+        <Route
+          path="/tutor/dashboard"
+          element={<ProtectedRoute role="tutor"><TutorDashboard /></ProtectedRoute>}
         />
-        <Route 
-          path="/tutors" 
-          element={<ProtectedRoute role="admin"><Placeholder title="Tutores" description="Gestión y consulta de tutores." /></ProtectedRoute>} 
+        <Route
+          path="/tutor/schedule"
+          element={<ProtectedRoute role="tutor"><SetSchedule /></ProtectedRoute>}
         />
-        <Route 
-          path="/sessions" 
-          element={<ProtectedRoute role="tutor"><Placeholder title="Sesiones" description="Gestión de sesiones de tutoría." /></ProtectedRoute>} 
+
+        <Route
+          path="/students"
+          element={<ProtectedRoute role="admin"><Placeholder title="Estudiantes" description="Gestión y consulta de estudiantes." /></ProtectedRoute>}
         />
-        <Route 
-          path="/reports" 
-          element={<ProtectedRoute role="admin"><Placeholder title="Reportes" description="Reportes administrativos del sistema." /></ProtectedRoute>} 
+        <Route
+          path="/tutors"
+          element={<ProtectedRoute role="admin"><Placeholder title="Tutores" description="Gestión y consulta de tutores." /></ProtectedRoute>}
+        />
+        <Route
+          path="/sessions"
+          element={<ProtectedRoute role="tutor"><Placeholder title="Sesiones" description="Gestión de sesiones de tutoría." /></ProtectedRoute>}
+        />
+        <Route
+          path="/reports"
+          element={<ProtectedRoute role="admin"><Placeholder title="Reportes" description="Reportes administrativos del sistema." /></ProtectedRoute>}
         />
       </Route>
 
