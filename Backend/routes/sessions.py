@@ -235,3 +235,60 @@ def sesiones_activas():
         return jsonify({"ok": True, "sesiones": sesiones})
     except Error:
         return jsonify({"ok": False, "message": "No fue posible consultar las sesiones."}), 500 
+
+@sessions_bp.get("/tutors/sessions/pending")
+def get_pending_sessions():
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    if payload.get("role") != "tutor":
+        return jsonify({"ok": False, "message": "No tienes permisos para esta acción."}), 403
+
+    id_tutor = int(payload["sub"])
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        s.id_sesion,
+                        s.fec_sesion,
+                        s.hora_inicio,
+                        s.hora_final,
+                        s.motivo,
+                        m.nombre AS materia,
+                        (u.nombres || ' ' || u.apellidos) AS nombre_estudiante
+                    FROM tsesion s
+                    JOIN tusuario u ON u.id_usuario = s.id_estudiante
+                    JOIN tmateria m ON m.id_materia = s.id_materia
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    WHERE s.id_tutor = %s
+                      AND es.txt_desc IN ('Pendiente', 'Confirmada')
+                    ORDER BY s.fec_sesion ASC, s.hora_inicio ASC
+                    """,
+                    (id_tutor,),
+                )
+                rows = cur.fetchall()
+
+        sesiones = [
+            {
+                "id_sesion": row["id_sesion"],
+                "fecha": str(row["fec_sesion"]),
+                "hora_inicio": row["hora_inicio"].strftime("%H:%M"),
+                "hora_final": row["hora_final"].strftime("%H:%M"),
+                "motivo": row["motivo"],
+                "materia": row["materia"],
+                "estudiante": row["nombre_estudiante"],
+            }
+            for row in rows
+        ]
+
+        return jsonify({"ok": True, "sesiones": sesiones})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible consultar las sesiones pendientes."}), 500

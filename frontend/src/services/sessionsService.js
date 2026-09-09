@@ -33,3 +33,12 @@ export async function getSesionesActivas() {
   return data.sesiones;
 }
 
+
+
+export async function getPendingSessions() {
+  const token = getToken();
+  const data = await apiRequest("/tutors/sessions/pending", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.sesiones;
+}

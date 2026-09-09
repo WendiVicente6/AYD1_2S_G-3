@@ -11,6 +11,7 @@ import RegisterTutor from "./pages/Registros/RegisterTutor";
 import SetSchedule from "./pages/Horarios/SetSchedule";
 import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 import SesionesActivas from "./pages/Sesiones/SesionesActivas";
+import PendingSessions from "./pages/Sesiones/PendingSessions";
 
 export default function App() {
   return (
@@ -57,7 +58,7 @@ export default function App() {
         />
         <Route
           path="/sessions"
-          element={<ProtectedRoute role="tutor"><Placeholder title="Sesiones" description="Gestión de sesiones de tutoría." /></ProtectedRoute>}
+          element={<ProtectedRoute role="tutor"><PendingSessions /></ProtectedRoute>}
         />
         <Route
           path="/reports"
