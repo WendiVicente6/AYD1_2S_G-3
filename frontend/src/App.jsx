@@ -10,6 +10,7 @@ import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
 import SetSchedule from "./pages/Horarios/SetSchedule";
 import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
+import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
 
 export default function App() {
@@ -27,10 +28,15 @@ export default function App() {
           path="/student/dashboard"
           element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
         />
-        
+
         <Route
           path="/student/programar-sesion"
           element={<ProtectedRoute role="student"><ProgramarSesion /></ProtectedRoute>}
+        />
+
+        <Route
+          path="/student/mis-sesiones"
+          element={<ProtectedRoute role="student"><SesionesActivas /></ProtectedRoute>}
         />
 
         <Route

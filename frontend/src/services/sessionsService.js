@@ -25,6 +25,16 @@ export async function crearSesion({ id_tutor, id_materia, fecha, hora_inicio, ho
   });
 }
 
+export async function getSesionesActivas() {
+  const token = getToken();
+  const data = await apiRequest("/sesiones/activas", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.sesiones;
+}
+
+
+
 export async function getPendingSessions() {
   const token = getToken();
   const data = await apiRequest("/tutors/sessions/pending", {
