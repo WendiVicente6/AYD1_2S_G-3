@@ -22,6 +22,7 @@ const LINKS_BY_ROLE = {
   student: [
     { to: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/student/programar-sesion", label: "Programar sesión", icon: CalendarDays },
+    { to: "/student/mis-sesiones", label: "Mis sesiones", icon: Clock },
   ],
 };
 
