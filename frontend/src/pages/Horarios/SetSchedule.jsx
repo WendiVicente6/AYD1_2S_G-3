@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { setSchedule } from "../../services/scheduleService";
+import { useEffect, useState } from "react";
+import { getSchedule, createSchedule, updateSchedule } from "../../services/scheduleService";
 
 const DIAS = [
   { id: 1, label: "Lunes" }, { id: 2, label: "Martes" }, { id: 3, label: "Miércoles" },
@@ -11,9 +11,30 @@ export default function SetSchedule() {
   const [diasSeleccionados, setDiasSeleccionados] = useState([]);
   const [horaInicio, setHoraInicio] = useState("");
   const [horaFin, setHoraFin] = useState("");
+  const [existeHorario, setExisteHorario] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cargandoInicial, setCargandoInicial] = useState(true);
+
+  useEffect(() => {
+    async function cargar() {
+      try {
+        const horario = await getSchedule();
+        if (horario) {
+          setExisteHorario(true);
+          setDiasSeleccionados(horario.dias);
+          setHoraInicio(horario.hora_inicio);
+          setHoraFin(horario.hora_fin);
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setCargandoInicial(false);
+      }
+    }
+    cargar();
+  }, []);
 
   const toggleDia = (id) => {
     setDiasSeleccionados((prev) =>
@@ -31,13 +52,14 @@ export default function SetSchedule() {
     }
 
     setLoading(true);
+    const payload = { dias: diasSeleccionados, hora_inicio: horaInicio, hora_fin: horaFin };
+
     try {
-      const result = await setSchedule({
-        dias: diasSeleccionados,
-        hora_inicio: horaInicio,
-        hora_fin: horaFin,
-      });
+      const result = existeHorario
+        ? await updateSchedule(payload)
+        : await createSchedule(payload);
       setMessage(result.message);
+      setExisteHorario(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -45,10 +67,14 @@ export default function SetSchedule() {
     }
   };
 
+  if (cargandoInicial) {
+    return <section className="registration-page"><p>Cargando horario...</p></section>;
+  }
+
   return (
     <section className="registration-page">
       <div className="registration-card">
-        <h1>Establecer horario de atención</h1>
+        <h1>{existeHorario ? "Actualizar" : "Establecer"} horario de atención</h1>
         <p>Selecciona los días y el rango de horas en que atenderás.</p>
 
         {message && <div className="alert success">{message}</div>}
@@ -75,7 +101,9 @@ export default function SetSchedule() {
             <input type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} required />
           </label>
 
-          <button disabled={loading}>{loading ? "Guardando..." : "Guardar horario"}</button>
+          <button disabled={loading}>
+            {loading ? "Guardando..." : existeHorario ? "Actualizar horario" : "Guardar horario"}
+          </button>
         </form>
       </div>
     </section>
