@@ -12,6 +12,7 @@ import SetSchedule from "./pages/Horarios/SetSchedule";
 import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
+import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
 
 export default function App() {
   return (
@@ -27,6 +28,11 @@ export default function App() {
         <Route
           path="/student/dashboard"
           element={<ProtectedRoute role="student"><StudentDashboard /></ProtectedRoute>}
+        />
+
+        <Route
+          path="/student/tutores"
+          element={<ProtectedRoute role="student"><TutoresDisponibles /></ProtectedRoute>}
         />
 
         <Route
