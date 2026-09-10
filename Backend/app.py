@@ -13,6 +13,7 @@ from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from routes.registration import registration_bp
 from routes.sessions import sessions_bp
+from routes.students import students_bp
 
 
 app = Flask(__name__)
@@ -28,6 +29,7 @@ app.register_blueprint(registration_bp)
 app.register_blueprint(schedule_bp, url_prefix="/api")
 
 app.register_blueprint(sessions_bp, url_prefix="/api")
+app.register_blueprint(students_bp, url_prefix="/api")
 
 @app.get("/api/health")
 def health():
