@@ -292,3 +292,63 @@ def get_pending_sessions():
         return jsonify({"ok": True, "sesiones": sesiones})
     except Error:
         return jsonify({"ok": False, "message": "No fue posible consultar las sesiones pendientes."}), 500
+
+@sessions_bp.put("/tutors/sessions/<int:id_sesion>/attend")
+def attend_session(id_sesion):
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    if payload.get("role") != "tutor":
+        return jsonify({"ok": False, "message": "No tienes permisos para esta acción."}), 403
+
+    id_tutor = int(payload["sub"])
+
+    body = request.get_json(silent=True) or {}
+    resumen = (body.get("resumen") or "").strip()
+
+    if not resumen:
+        return jsonify({"ok": False, "message": "El resumen de la sesión es obligatorio."}), 400
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # Verificar que la sesión sea del tutor autenticado y siga pendiente
+                cur.execute(
+                    """
+                    SELECT s.id_sesion, es.txt_desc AS estado
+                    FROM tsesion s
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    WHERE s.id_sesion = %s AND s.id_tutor = %s
+                    """,
+                    (id_sesion, id_tutor),
+                )
+                sesion = cur.fetchone()
+
+                if sesion is None:
+                    return jsonify({"ok": False, "message": "La sesión no existe o no te pertenece."}), 404
+
+                if sesion["estado"] not in ("Pendiente", "Confirmada"):
+                    return jsonify({
+                        "ok": False,
+                        "message": f"No se puede atender: la sesión ya está en estado '{sesion['estado']}'."
+                    }), 409
+
+                cur.execute(
+                    """
+                    UPDATE tsesion
+                    SET resumen = %s,
+                        id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Completada')
+                    WHERE id_sesion = %s
+                    """,
+                    (resumen, id_sesion),
+                )
+            conn.commit()
+
+        return jsonify({"ok": True, "message": "Sesión marcada como atendida correctamente."})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible registrar la sesión como atendida."}), 500
