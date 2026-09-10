@@ -32,3 +32,12 @@ export async function getPendingSessions() {
   });
   return data.sesiones;
 }
+
+export async function attendSession(idSesion, resumen) {
+  const token = getToken();
+  return apiRequest(`/tutors/sessions/${idSesion}/attend`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ resumen }),
+  });
+}
