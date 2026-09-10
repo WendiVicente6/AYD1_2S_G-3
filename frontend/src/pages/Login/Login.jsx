@@ -12,11 +12,11 @@ const dashboardForRole = {
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  const [correo, setCorreo] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [correo,setCorreo] = useState("");
+  const [password,setPassword] = useState("");
+  const [error,setError] = useState("");
+  const [loading,setLoading] = useState(false);
+  
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -29,26 +29,22 @@ export default function Login() {
 
     try {
       setLoading(true);
-
+      //const user = await login(correo.trim(), password);
       const user = await login(correo.trim(), password);
+console.log("USUARIO DESDE LOGIN:", user);
+console.log("ROL:", user.role);
 
-      console.log("USUARIO DESDE LOGIN:", user);
-      console.log("ROL:", user.role);
 
       if (user.role === "admin") {
-        navigate("/auth2", { replace: true });
+          navigate("/auth2", { replace: true });
       } else {
-        navigate(
-          dashboardForRole[user.role] || "/login",
-          { replace: true }
-        );
+          navigate(dashboardForRole[user.role] || "/login", { replace: true });
       }
 
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+
+
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
   }
 
   return (

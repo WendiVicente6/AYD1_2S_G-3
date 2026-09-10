@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta, timezone
+import bcrypt   
 import jwt
 from flask import current_app, request
 from werkzeug.security import check_password_hash
+from routes.auth2 import auth2_bp
+
 
 
 ROLE_MAP = {
@@ -37,13 +40,32 @@ def decode_token(token):
 def password_is_valid(password, stored_password):
     if not stored_password:
         return False
-    
-    stored_password = stored_password.strip() 
-    password = password.strip()
 
     try:
-        if check_password_hash(stored_password, password):
-            return True
+        return bcrypt.checkpw(
+            password.encode("utf-8"),
+            stored_password.encode("utf-8")
+        )
     except (ValueError, TypeError):
-        pass 
-    return password == stored_password
+        return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

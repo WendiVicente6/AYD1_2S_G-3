@@ -10,7 +10,7 @@ import Auth2 from "./pages/Auth2/Auth2";
 import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
 import SetSchedule from "./pages/Horarios/SetSchedule";
-
+import Auth2 from "./pages/Auth2/Auth2";
 
 
 export default function App() {
