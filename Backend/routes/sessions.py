@@ -188,6 +188,54 @@ def crear_sesion():
     except Error:
         return jsonify({"ok": False, "message": "No fue posible crear la sesión."}), 500
 
+@sessions_bp.get("/sesiones/activas")
+def sesiones_activas():
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    id_estudiante = int(payload["sub"])
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        s.id_sesion,
+                        s.fec_sesion,
+                        s.hora_inicio,
+                        s.hora_final,
+                        s.motivo,
+                        m.nombre AS materia,
+                        u.nombres AS tutor_nombres,
+                        u.apellidos AS tutor_apellidos,
+                        es.txt_desc AS estado
+                    FROM tsesion s
+                    JOIN tmateria m ON m.id_materia = s.id_materia
+                    JOIN tusuario u ON u.id_usuario = s.id_tutor
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    WHERE s.id_estudiante = %s
+                      AND es.txt_desc IN ('Pendiente', 'Confirmada')
+                    ORDER BY s.fec_sesion, s.hora_inicio
+                    """,
+                    (id_estudiante,),
+                )
+                sesiones = cur.fetchall()
+
+        for s in sesiones:
+            s["fec_sesion"] = s["fec_sesion"].strftime("%Y-%m-%d")
+            s["hora_inicio"] = s["hora_inicio"].strftime("%H:%M")
+            s["hora_final"] = s["hora_final"].strftime("%H:%M")
+
+        return jsonify({"ok": True, "sesiones": sesiones})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible consultar las sesiones."}), 500 
+
 @sessions_bp.get("/tutors/sessions/pending")
 def get_pending_sessions():
     token = get_bearer_token()
