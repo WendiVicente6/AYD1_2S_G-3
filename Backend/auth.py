@@ -68,4 +68,3 @@ def password_is_valid(password, stored_password):
 
 
 
-

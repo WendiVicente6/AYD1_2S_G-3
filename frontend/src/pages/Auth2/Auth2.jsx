@@ -1,10 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 7d05358 (feat: se agrega HU-004 (autenticación del administrador))
 export default function Auth2() {
   const [archivo, setArchivo] = useState(null);
   const [error, setError] = useState("");
@@ -47,12 +43,9 @@ export default function Auth2() {
         return;
       }
 
-<<<<<<< HEAD
       navigate("/dashboard");
-=======
       /*navigate("/dashboard");*/
       navigate("/admin/dashboard", { replace: true });
->>>>>>> 7d05358 (feat: se agrega HU-004 (autenticación del administrador))
     } catch (error) {
       setError("No se pudo conectar con el servidor");
     } finally {

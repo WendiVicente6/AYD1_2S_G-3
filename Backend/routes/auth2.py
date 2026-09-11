@@ -6,7 +6,7 @@ auth2_bp = Blueprint("auth2", __name__)
 NOMBRE_ARCHIVO_AUTH2 = "auth2-ayd1.txt"
 
 
-@auth2_bp.post("/api/auth2")
+@auth2_bp.post("/auth2")
 def auth2():
     # Verificar que se haya enviado un archivo
     if "archivo" not in request.files:

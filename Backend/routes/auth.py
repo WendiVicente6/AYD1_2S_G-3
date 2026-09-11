@@ -1,7 +1,12 @@
 from flask import Blueprint, jsonify, request
-from psycopg import Error
 from conexion.db import get_connection
-from auth import create_token, normalize_role, password_is_valid, decode_token, get_bearer_token
+from auth import (
+    create_token,
+    normalize_role,
+    password_is_valid,
+    decode_token,
+    get_bearer_token
+)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -53,6 +58,7 @@ def find_user_by_id(user_id):
 @auth_bp.post("/login")
 def login():
     data = request.get_json(silent=True) or {}
+
     correo = str(data.get("correo", "")).strip()
     password = str(data.get("password", "")).strip()
 
@@ -63,6 +69,9 @@ def login():
             "ok": False,
             "message": "Correo y contraseña son obligatorios."
         }), 400
+
+    user = None
+    password_ok = False
 
     try:
         print("1. Intentando conectar a la Base de Datos...")
@@ -148,6 +157,7 @@ def me():
     try:
         payload = decode_token(token)
         user = find_user_by_id(int(payload["sub"]))
+
     except Exception:
         return jsonify({
             "ok": False,

@@ -1,0 +1,182 @@
+/* ============================================================
+   HU-006 · Página de tutores disponibles
+   ============================================================ */
+.tutor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 17px;
+}
+
+.tutor-card {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tutor-card-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.tutor-foto {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.tutor-foto-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--blue-light);
+  color: #4b52df;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.tutor-card-head strong {
+  display: block;
+  font-size: 14px;
+}
+
+.tutor-dir {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.tutor-materias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tutor-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: auto;
+}
+
+.muted-text {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ============================================================
+   HU-007 · Modal de horario y disponibilidad
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(16, 35, 68, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.modal-card {
+  width: min(520px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 20px 55px rgba(23, 32, 51, 0.18);
+}
+
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-head h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.horario-resumen {
+  background: #f6f8fc;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.horario-resumen p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.fecha-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4c566b;
+}
+
+.fecha-label input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.notice {
+  background: #fff4d9;
+  color: #a16d00;
+  border: 1px solid #f0e0b0;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.slot {
+  border-radius: 9px;
+  border: 1px solid transparent;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.slot span {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.slot-disponible {
+  background: #e9f8ef;
+  color: #2e965a;
+  border-color: #c5ead4;
+}
+
+.slot-ocupado {
+  background: #fdecec;
+  color: #c0392b;
+  border-color: #f2cccc;
+}
+
+@media (max-width: 520px) {
+  .tutor-grid {
+    grid-template-columns: 1fr;
+  }
+}

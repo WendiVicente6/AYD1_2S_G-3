@@ -4,6 +4,8 @@ export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     headers: {"Content-Type": "application/json", ...(options.headers || {})},
     ...options,
+    ...options,
+    headers: {"Content-Type": "application/json", ...(options.headers || {})},
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -13,3 +15,4 @@ export async function apiRequest(path, options = {}) {
   }
   return data;
 }
+
