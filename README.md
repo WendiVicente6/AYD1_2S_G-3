@@ -10,6 +10,8 @@ EduConnect - Plataforma de Gestión de Tutorias Academicas
 - [Documentación Scrum](https://hackmd.io/fmAtmtkRTwaGJF3XyWq7Zw)
 - [Manual Tecnico](https://hackmd.io/@Wendi6/H1WlA4fFzl/edit)
 - [Manual de Usuario](https://hackmd.io/@Wendi6/r1-HRNfKzx/edit)
-- [Casos de uso](https://drive.google.com/drive/folders/1CS-8WoJc4Eu1ncdMym6jGhPL7Y34j3Cw?usp=sharing)
+- [Diagrama de casos de uso](https://hackmd.io/@Wendi6/SJxEEYQtGx/edit)
+- [Requerimientos funcionales y no funcionales](https://hackmd.io/@Wendi6/Hyc8NK7tGx/edit)
+- [Calificación Scrum Master](https://hackmd.io/@Wendi6/BkLfkFmYGg/edit)
 
 
