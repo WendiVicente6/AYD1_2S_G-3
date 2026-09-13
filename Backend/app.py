@@ -14,12 +14,22 @@ from routes.dashboard import dashboard_bp
 from routes.registration import registration_bp
 from routes.sessions import sessions_bp
 from routes.students import students_bp
+from routes.adminstudent import admin_bp
 
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/api/*": {"origins": os.getenv("FRONTEND_URL", "http://localhost:5173")}})
 
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": ["http://localhost:5173"],
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+        }
+    }
+)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-only-change-me")
 app.config["JWT_EXPIRES_MINUTES"] = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
 
@@ -30,7 +40,7 @@ app.register_blueprint(schedule_bp, url_prefix="/api")
 
 app.register_blueprint(sessions_bp, url_prefix="/api")
 app.register_blueprint(students_bp, url_prefix="/api")
-
+app.register_blueprint(admin_bp, url_prefix="/api/admin")
 @app.get("/api/health")
 def health():
     return {"ok": True, "service": "EduConnect API"}

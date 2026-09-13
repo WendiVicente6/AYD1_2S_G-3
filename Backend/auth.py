@@ -47,3 +47,15 @@ def password_is_valid(password, stored_password):
     except (ValueError, TypeError):
         pass 
     return password == stored_password
+
+def password_is_valid(password, stored_password):
+    if not stored_password:
+        return False
+
+    password = password.strip()
+    stored_password = stored_password.strip()
+
+    try:
+        return check_password_hash(stored_password, password)
+    except (ValueError, TypeError):
+        return False

@@ -13,6 +13,7 @@ import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
 import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
+import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
 
 export default function App() {
   return (
@@ -56,8 +57,9 @@ export default function App() {
 
         <Route
           path="/students"
-          element={<ProtectedRoute role="admin"><Placeholder title="Estudiantes" description="Gestión y consulta de estudiantes." /></ProtectedRoute>}
-        />
+          element={
+          <ProtectedRoute role="admin"><AprobarEstudiantes /></ProtectedRoute>}
+          />
         <Route
           path="/tutors"
           element={<ProtectedRoute role="admin"><Placeholder title="Tutores" description="Gestión y consulta de tutores." /></ProtectedRoute>}
