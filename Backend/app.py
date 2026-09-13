@@ -80,6 +80,10 @@ app.register_blueprint(
     url_prefix="/api"
 )
 
+app.register_blueprint(
+    admin_bp,
+    url_prefix="/api/admin"
+)
 
 # Ruta para comprobar que el backend funciona
 @app.get("/api/health")

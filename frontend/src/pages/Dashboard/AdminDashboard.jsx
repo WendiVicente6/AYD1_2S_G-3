@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   CalendarDays,
@@ -14,7 +15,7 @@ export default function AdminDashboard() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const navigate = useNavigate();
   useEffect(() => {
     const cargarDashboard = async () => {
       try {
@@ -104,9 +105,7 @@ export default function AdminDashboard() {
               <p>Usuarios esperando revisión.</p>
             </div>
 
-            <button className="text-button">
-              Ver todos
-            </button>
+
           </div>
 
           <div className="approval-list">
