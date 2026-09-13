@@ -20,6 +20,7 @@ import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
 import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
+import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
 
 export default function App() {
   return (
