@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import Login from "./pages/Login/Login";
 import AdminDashboard from "./pages/Dashboard/AdminDashboard";
 import TutorDashboard from "./pages/Dashboard/TutorDashboard";
@@ -94,17 +93,14 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/students"
-          element={
-            <ProtectedRoute role="admin">
-              <Placeholder
-                title="Estudiantes"
-                description="Gestión y consulta de estudiantes."
-              />
-            </ProtectedRoute>
-          }
-        />
+<Route
+  path="/students"
+  element={
+    <ProtectedRoute role="admin">
+      <AprobarEstudiantes />
+    </ProtectedRoute>
+  }
+/>
 
         <Route
           path="/tutors"
