@@ -105,7 +105,6 @@ export default function AdminDashboard() {
               <p>Usuarios esperando revisión.</p>
             </div>
 
-
           </div>
 
           <div className="approval-list">

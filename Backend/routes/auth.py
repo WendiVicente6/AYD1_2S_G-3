@@ -39,6 +39,7 @@ def find_user_by_email(correo):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
+
                 USER_SELECT + " WHERE LOWER(u.correo)=LOWER(%s) LIMIT 1",
                 (correo,)
             )
@@ -131,7 +132,7 @@ def login():
                 if cur.fetchone() is None:
                     return jsonify({
                         "ok": False,
-                        "message": "El usuario tiene rol Tutor, pero no tiene registro en ttutor."
+                        "message": "El usuario tiene rol Tutor, pero no tiene registro en tutor."
                     }), 403
 
     user["role"] = role
