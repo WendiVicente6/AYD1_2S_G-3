@@ -3,7 +3,7 @@ import { useAuth } from "../../pages/context/AuthContext";
 
 import {
   BarChart3, CalendarDays, Clock, GraduationCap, LayoutDashboard,
-  LogOut, Search, Settings, Users, UserRound, History
+  LogOut, Search, Users, UserRound, History
 } from "lucide-react";
 
 // Links disponibles según el rol del usuario autenticado.
@@ -72,12 +72,6 @@ export default function Sidebar() {
             <span>{label}</span>
           </NavLink>
         ))}
-
-        <p className="nav-label nav-label-spaced">SISTEMA</p>
-        <button className="nav-item nav-button" type="button">
-          <Settings size={19} />
-          <span>Configuración</span>
-        </button>
       </nav>
 
       <div className="sidebar-footer">
