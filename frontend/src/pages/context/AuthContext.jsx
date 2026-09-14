@@ -25,11 +25,17 @@ export function AuthProvider({children}) {
   function logout() { logoutRequest(); setUser(null); }
 
   async function updateProfile(payload) {
-  const updatedUser = await updateMeRequest(payload);
-  setUser(updatedUser);
-  return updatedUser;
-}
+    const updatedUser = await updateMeRequest(payload);
+    setUser(updatedUser);
+    return updatedUser;
+  }
 
-  return <AuthContext.Provider value={{user, loading, login, logout, updateProfile}}>{children}</AuthContext.Provider>;
+  async function refreshUser() {
+    const currentUser = await getMe();
+    setUser(currentUser);
+    return currentUser;
+  }
+
+  return <AuthContext.Provider value={{user, loading, login, logout, updateProfile, refreshUser}}>{children}</AuthContext.Provider>;
 }
 export function useAuth() { return useContext(AuthContext); }

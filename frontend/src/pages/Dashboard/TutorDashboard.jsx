@@ -1,11 +1,22 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarClock, Clock, GraduationCap } from "lucide-react";
+import { CalendarClock, Clock, GraduationCap, History } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import StatCard from "../../components/StatCard/StatCard";
+import { getTutorDashboardStats } from "../../services/tutorsService";
 
 export default function TutorDashboard() {
   const { user } = useAuth();
   const firstName = user?.nombres?.split(" ")[0] || "";
+
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    getTutorDashboardStats()
+      .then(setStats)
+      .catch((err) => setError(err.message));
+  }, []);
 
   return (
     <section>
@@ -16,6 +27,8 @@ export default function TutorDashboard() {
         </div>
       </div>
 
+      {error && <div className="alert error">{error}</div>}
+
       <div className="stats-grid">
         <StatCard
           icon={<Clock />}
@@ -23,16 +36,24 @@ export default function TutorDashboard() {
           value={<Link to="/tutor/schedule" className="text-button">Configurar</Link>}
           detail="Días y horas de atención"
         />
-        <StatCard icon={<CalendarClock />} label="Sesiones pendientes" value="—" detail="Próximamente" />
-        <StatCard icon={<GraduationCap />} label="Estudiantes atendidos" value="—" detail="Próximamente" />
-      </div>
-
-      <div className="dashboard-grid">
-        <article className="panel empty-page" style={{ minHeight: "220px" }}>
-          <div className="empty-icon"><CalendarClock size={28} /></div>
-          <h2>Tus sesiones pendientes aparecerán aquí</h2>
-          <p>Esta vista se conectará cuando esté lista la gestión de sesiones del tutor.</p>
-        </article>
+        <StatCard
+          icon={<CalendarClock />}
+          label="Sesiones pendientes"
+          value={stats ? stats.sesiones_pendientes : "—"}
+          detail="Por confirmar o atender"
+        />
+        <StatCard
+          icon={<GraduationCap />}
+          label="Estudiantes atendidos"
+          value={stats ? stats.estudiantes_atendidos : "—"}
+          detail="Sesiones completadas"
+        />
+        <StatCard
+          icon={<History />}
+          label="Mi historial"
+          value={<Link to="/tutor/historial" className="text-button">Ver historial</Link>}
+          detail="Sesiones ya atendidas o canceladas"
+        />
       </div>
     </section>
   );

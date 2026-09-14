@@ -59,3 +59,20 @@ export async function cancelarSesion(idSesion) {
     headers: { Authorization: `Bearer ${token}` },
   });
 }
+
+export async function confirmSession(idSesion) {
+  const token = getToken();
+  return apiRequest(`/tutors/sessions/${idSesion}/confirm`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function cancelSession(idSesion, motivo) {
+  const token = getToken();
+  return apiRequest(`/tutors/sessions/${idSesion}/cancel`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ motivo }),
+  });
+}

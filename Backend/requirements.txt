@@ -9,5 +9,6 @@ Werkzeug==3.1.8
 bcrypt==5.0.0
 pg8000==1.31.5
 psycopg[binary]
+psycopg2-binary
 PyJWT
 python-dotenv

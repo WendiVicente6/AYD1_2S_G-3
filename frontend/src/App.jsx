@@ -24,6 +24,8 @@ import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
 
 import Profile from "./pages/Profile/Profile";
 import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
+import Historial from "./pages/Tutores/Historial";
+import PerfilTutor from "./pages/Tutores/PerfilTutor";
 
 export default function App() {
   return (
@@ -146,6 +148,25 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/tutor/historial"
+          element={
+            <ProtectedRoute role="tutor">
+              <Historial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tutor/perfil"
+          element={
+            <ProtectedRoute role="tutor">
+              <PerfilTutor />
+            </ProtectedRoute>
+          }
+        />
+
       </Route>
 
       <Route path="/register" element={<Register />} />

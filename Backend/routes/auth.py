@@ -18,7 +18,7 @@ PASSWORD_RE = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 
 USER_SELECT = """
 SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.password,
-       u.telefono, u.direccion, u.fec_nac, u.genero,
+       u.telefono, u.direccion, u.fec_nac, u.genero, u.foto,
        u.id_rol, u.id_estado_usr, u.sn_activo,
        r.txt_desc AS rol, e.txt_desc AS estado
 FROM tusuario u
@@ -37,6 +37,7 @@ def public_user(row):
         "direccion": row["direccion"],
         "fec_nac": row["fec_nac"].isoformat() if row["fec_nac"] else None,
         "genero": row["genero"],
+        "foto": bytes(row["foto"]).decode("utf-8") if row["foto"] else None,
         "id_rol": row["id_rol"],
         "rol": row["rol"],
         "role": normalize_role(row["rol"]),

@@ -3,6 +3,7 @@ from psycopg import Error
 from conexion.db import get_connection
 from auth import decode_token, get_bearer_token
 from datetime import datetime
+from services.email_service import send_cancelacion_email
 
 sessions_bp = Blueprint("sessions", __name__)
 
@@ -263,7 +264,8 @@ def get_pending_sessions():
                         s.hora_final,
                         s.motivo,
                         m.nombre AS materia,
-                        (u.nombres || ' ' || u.apellidos) AS nombre_estudiante
+                        (u.nombres || ' ' || u.apellidos) AS nombre_estudiante,
+                        es.txt_desc AS estado
                     FROM tsesion s
                     JOIN tusuario u ON u.id_usuario = s.id_estudiante
                     JOIN tmateria m ON m.id_materia = s.id_materia
@@ -285,6 +287,7 @@ def get_pending_sessions():
                 "motivo": row["motivo"],
                 "materia": row["materia"],
                 "estudiante": row["nombre_estudiante"],
+                "estado": row["estado"],
             }
             for row in rows
         ]
@@ -402,13 +405,154 @@ def cancelar_sesion_estudiante(id_sesion):
                     """
                     UPDATE tsesion
                     SET motivo_cancelacion = 'Cancelada por el estudiante',
+                        id_usuario_cancelacion = %s,
                         id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Cancelada')
                     WHERE id_sesion = %s
                     """,
-                    (id_sesion,),
+                    (id_estudiante, id_sesion),
                 )
             conn.commit()
 
         return jsonify({"ok": True, "message": "Sesión cancelada correctamente."})
     except Error:
         return jsonify({"ok": False, "message": "No fue posible cancelar la sesión."}), 500
+
+@sessions_bp.put("/tutors/sessions/<int:id_sesion>/confirm")
+def confirm_session(id_sesion):
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    if payload.get("role") != "tutor":
+        return jsonify({"ok": False, "message": "No tienes permisos para esta acción."}), 403
+
+    id_tutor = int(payload["sub"])
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT s.id_sesion, es.txt_desc AS estado
+                    FROM tsesion s
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    WHERE s.id_sesion = %s AND s.id_tutor = %s
+                    """,
+                    (id_sesion, id_tutor),
+                )
+                sesion = cur.fetchone()
+
+                if sesion is None:
+                    return jsonify({"ok": False, "message": "La sesión no existe o no te pertenece."}), 404
+
+                if sesion["estado"] != "Pendiente":
+                    return jsonify({
+                        "ok": False,
+                        "message": f"No se puede confirmar: la sesión ya está en estado '{sesion['estado']}'."
+                    }), 409
+
+                cur.execute(
+                    """
+                    UPDATE tsesion
+                    SET id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Confirmada')
+                    WHERE id_sesion = %s
+                    """,
+                    (id_sesion,),
+                )
+            conn.commit()
+
+        return jsonify({"ok": True, "message": "Sesión confirmada correctamente."})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible confirmar la sesión."}), 500
+
+@sessions_bp.put("/tutors/sessions/<int:id_sesion>/cancel")
+def cancel_session(id_sesion):
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    if payload.get("role") != "tutor":
+        return jsonify({"ok": False, "message": "No tienes permisos para esta acción."}), 403
+
+    id_tutor = int(payload["sub"])
+
+    body = request.get_json(silent=True) or {}
+    motivo = (body.get("motivo") or "").strip()
+
+    if not motivo:
+        return jsonify({"ok": False, "message": "El motivo de la cancelación es obligatorio."}), 400
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        s.id_sesion,
+                        es.txt_desc AS estado,
+                        s.fec_sesion,
+                        s.hora_inicio,
+                        s.hora_final,
+                        m.nombre AS materia,
+                        (tut.nombres || ' ' || tut.apellidos) AS tutor_nombre,
+                        est.correo AS estudiante_correo,
+                        est.nombres AS estudiante_nombres
+                    FROM tsesion s
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    JOIN tmateria m ON m.id_materia = s.id_materia
+                    JOIN tusuario tut ON tut.id_usuario = s.id_tutor
+                    JOIN tusuario est ON est.id_usuario = s.id_estudiante
+                    WHERE s.id_sesion = %s AND s.id_tutor = %s
+                    """,
+                    (id_sesion, id_tutor),
+                )
+                sesion = cur.fetchone()
+
+                if sesion is None:
+                    return jsonify({"ok": False, "message": "La sesión no existe o no te pertenece."}), 404
+
+                if sesion["estado"] in ("Completada", "Cancelada"):
+                    return jsonify({
+                        "ok": False,
+                        "message": f"No se puede cancelar: la sesión ya está en estado '{sesion['estado']}'."
+                    }), 409
+
+                cur.execute(
+                    """
+                    UPDATE tsesion
+                    SET motivo_cancelacion = %s,
+                        id_usuario_cancelacion = %s,
+                        id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Cancelada')
+                    WHERE id_sesion = %s
+                    """,
+                    (motivo, id_tutor, id_sesion),
+                )
+            conn.commit()
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible cancelar la sesión."}), 500
+
+    mensaje = "Sesión cancelada correctamente. Se notificó al estudiante por correo."
+    try:
+        send_cancelacion_email(
+            destinatario=sesion["estudiante_correo"],
+            nombre_estudiante=sesion["estudiante_nombres"],
+            fecha=sesion["fec_sesion"],
+            hora_inicio=sesion["hora_inicio"],
+            hora_final=sesion["hora_final"],
+            motivo=motivo,
+            nombre_tutor=sesion["tutor_nombre"],
+            materia=sesion["materia"],
+        )
+    except Exception as e:
+        mensaje = "Sesión cancelada correctamente, pero no se pudo enviar el correo de notificación al estudiante."
+        print(f"[cancel_session] Error enviando correo de cancelación: {e}")
+
+    return jsonify({"ok": True, "message": mensaje})

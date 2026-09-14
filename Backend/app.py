@@ -11,9 +11,9 @@ from routes.registration import registration_bp
 from routes.schedule import schedule_bp
 from routes.sessions import sessions_bp
 from routes.students import students_bp
-from routes.adminstudent import admin_bp
-
 from routes.auth2 import auth2_bp
+from routes.tutor import tutor_sessions_bp
+from routes.adminstudent import admin_bp
 
 app = Flask(__name__)
 
@@ -23,14 +23,13 @@ CORS(
     app,
     resources={
         r"/api/*": {
-            "origins": ["http://localhost:5173"],
-            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"],
+            "origins": os.getenv(
+                "FRONTEND_URL",
+                "http://localhost:5173"
+            )
         }
     }
 )
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-only-change-me")
-app.config["JWT_EXPIRES_MINUTES"] = int(os.getenv("JWT_EXPIRES_MINUTES", "120"))
 
 
 # Configuración JWT
@@ -84,6 +83,12 @@ app.register_blueprint(
     admin_bp,
     url_prefix="/api/admin"
 )
+
+app.register_blueprint(
+    tutor_sessions_bp,
+    url_prefix="/api"
+)
+
 
 # Ruta para comprobar que el backend funciona
 @app.get("/api/health")

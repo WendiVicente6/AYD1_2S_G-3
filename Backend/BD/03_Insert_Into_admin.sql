@@ -22,7 +22,7 @@ VALUES (
     '00000000',
     DATE '2000-01-01',
     'admin@EduConnect.com',
-    '123',
+    'scrypt:32768:8:1$tQZulU9RXtXHzfBC$7a8570a58d99470042e71162541be93543ac5f8a855c02f7e4f7025471d355a2b05f1e585226f041d75904a7081d108fb7f82140120360183b1e7b311dbfaae4',
     2,
     1
 );
