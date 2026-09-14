@@ -1,17 +1,24 @@
+import re
+from datetime import datetime
 from flask import Blueprint, jsonify, request
 from conexion.db import get_connection
+
 from auth import (
     create_token,
     normalize_role,
     password_is_valid,
+    hash_password,
     decode_token,
     get_bearer_token
 )
 
 auth_bp = Blueprint("auth", __name__)
 
+PASSWORD_RE = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
+
 USER_SELECT = """
 SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.password,
+       u.telefono, u.direccion, u.fec_nac, u.genero,
        u.id_rol, u.id_estado_usr, u.sn_activo,
        r.txt_desc AS rol, e.txt_desc AS estado
 FROM tusuario u
@@ -26,6 +33,10 @@ def public_user(row):
         "nombres": row["nombres"],
         "apellidos": row["apellidos"],
         "correo": row["correo"],
+        "telefono": row["telefono"],
+        "direccion": row["direccion"],
+        "fec_nac": row["fec_nac"].isoformat() if row["fec_nac"] else None,
+        "genero": row["genero"],
         "id_rol": row["id_rol"],
         "rol": row["rol"],
         "role": normalize_role(row["rol"]),
@@ -185,3 +196,118 @@ def me():
         "ok": True,
         "user": public_user(user)
     })
+
+
+@auth_bp.put("/me")
+def update_me():
+    token = get_bearer_token()
+
+    if not token:
+        return jsonify({
+            "ok": False,
+            "message": "Token requerido."
+        }), 401
+
+    try:
+        payload = decode_token(token)
+        user_id = int(payload["sub"])
+    except Exception:
+        return jsonify({
+            "ok": False,
+            "message": "Sesión inválida o expirada."
+        }), 401
+
+    data = request.get_json(silent=True) or {}
+
+    # Campos editables por el propio usuario.
+    # OJO: correo, carnet, id_rol e id_estado_usr NO se tocan aquí.
+    editable_fields = ["nombres", "apellidos", "direccion", "telefono", "fec_nac", "genero"]
+
+    updates = {}
+    for field in editable_fields:
+        if field in data:
+            updates[field] = data[field]
+
+    # Cambio de contraseña (opcional)
+    current_password = data.get("password_actual")
+    new_password = data.get("password_nueva")
+
+    if current_password or new_password:
+        if not current_password or not new_password:
+            return jsonify({
+                "ok": False,
+                "message": "Para cambiar la contraseña debes indicar la contraseña actual y la nueva."
+            }), 400
+
+        current_user = find_user_by_id(user_id)
+        if not current_user or not password_is_valid(current_password, current_user["password"]):
+            return jsonify({
+                "ok": False,
+                "message": "La contraseña actual no es correcta."
+            }), 401
+
+        if not PASSWORD_RE.match(new_password):
+            return jsonify({
+                "ok": False,
+                "message": "La nueva contraseña debe tener mínimo 8 caracteres, una minúscula, una mayúscula y un número."
+            }), 400
+
+        updates["password"] = hash_password(new_password)
+
+    if not updates:
+        return jsonify({
+            "ok": False,
+            "message": "No se enviaron campos para actualizar."
+        }), 400
+
+    # Validaciones básicas (mismo criterio que registration.py)
+    if "nombres" in updates and not str(updates["nombres"]).strip():
+        return jsonify({"ok": False, "message": "El nombre no puede estar vacío."}), 400
+
+    if "apellidos" in updates and not str(updates["apellidos"]).strip():
+        return jsonify({"ok": False, "message": "El apellido no puede estar vacío."}), 400
+
+    if "fec_nac" in updates:
+        try:
+            datetime.strptime(updates["fec_nac"], "%Y-%m-%d")
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "message": "La fecha de nacimiento no es válida."}), 400
+
+    if "genero" in updates:
+        updates["genero"] = str(updates["genero"]).strip().upper()
+
+    # Construir el UPDATE dinámicamente según los campos enviados
+    set_clause = ", ".join(f"{field} = %s" for field in updates)
+    values = list(updates.values())
+    values.append(user_id)
+
+    conn = None
+    try:
+        conn = get_connection()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"UPDATE tusuario SET {set_clause} WHERE id_usuario = %s",
+                    values
+                )
+
+        user = find_user_by_id(user_id)
+        if not user:
+            return jsonify({"ok": False, "message": "Usuario no encontrado."}), 404
+
+        user["role"] = normalize_role(user["rol"])
+
+        return jsonify({
+            "ok": True,
+            "message": "Perfil actualizado correctamente.",
+            "user": public_user(user)
+        })
+
+    except Exception as exc:
+        return jsonify({
+            "ok": False,
+            "message": f"No fue posible actualizar el perfil: {exc}"
+        }), 500
+    finally:
+        if conn:
+            conn.close()

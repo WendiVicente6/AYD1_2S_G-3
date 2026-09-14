@@ -3,7 +3,7 @@ import { useAuth } from "../../pages/context/AuthContext";
 
 import {
   BarChart3, CalendarDays, Clock, GraduationCap, LayoutDashboard,
-  LogOut, Search, Settings, Users
+  LogOut, Search, Settings, Users, UserRound
 } from "lucide-react";
 
 // Links disponibles según el rol del usuario autenticado.
@@ -24,6 +24,7 @@ const LINKS_BY_ROLE = {
     { to: "/student/tutores", label: "Buscar tutores", icon: Search },
     { to: "/student/programar-sesion", label: "Programar sesión", icon: CalendarDays },
     { to: "/student/mis-sesiones", label: "Mis sesiones", icon: Clock },
+    { to: "/student/profile", label: "Mi perfil", icon: UserRound },
   ],
 };
 
