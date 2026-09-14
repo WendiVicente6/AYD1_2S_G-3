@@ -51,3 +51,11 @@ export async function attendSession(idSesion, resumen) {
     body: JSON.stringify({ resumen }),
   });
 }
+
+export async function cancelarSesion(idSesion) {
+  const token = getToken();
+  return apiRequest(`/sesiones/${idSesion}/cancelar`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
