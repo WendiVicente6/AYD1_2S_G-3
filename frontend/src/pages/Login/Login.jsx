@@ -2,6 +2,8 @@ import { useState } from "react";
 import { GraduationCap, LockKeyhole, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { Link } from 'react-router-dom';
+
 
 const dashboardForRole = {
   admin: "/admin/dashboard",
@@ -119,12 +121,9 @@ export default function Login() {
         <p className="login-note">
           ¿No tienes una cuenta?
 
-          <button
-            type="button"
-            onClick={() => navigate("/register/tutor")}
-          >
+          <Link to="/register">
             Crear cuenta
-          </button>
+          </Link>
         </p>
 
       </section>
