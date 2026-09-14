@@ -53,7 +53,11 @@ export default function Topbar() {
           <span>3</span>
         </button>
         <div className="topbar-user">
-          <div className="avatar avatar-purple">{initials}</div>
+          {user?.foto ? (
+            <img src={user.foto} alt="Foto de perfil" className="avatar avatar-img" />
+          ) : (
+            <div className="avatar avatar-purple">{initials}</div>
+          )}
           <div>
             <strong>{displayName}</strong>
             <span>{roleLabel}</span>

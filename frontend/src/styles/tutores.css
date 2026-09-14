@@ -1,3 +1,4 @@
+@import "tailwindcss";
 /* ============================================================
    HU-006 · Página de tutores disponibles
    ============================================================ */
@@ -179,4 +180,134 @@
   .tutor-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ============================================================
+   HU-XXX · Historial de sesiones (tutor)
+   ============================================================ */
+.historial-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.historial-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.historial-table th {
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  border-bottom: 1px solid var(--border);
+}
+
+.historial-table td {
+  padding: 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f2f6;
+  vertical-align: middle;
+}
+
+.historial-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.historial-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #eef0f4;
+  color: #5b6472;
+}
+
+.status-confirmada {
+  background: #fdead9;
+  color: #c9660a;
+}
+
+.status-completada {
+  background: #e9f8ef;
+  color: #2e965a;
+}
+
+.status-cancelada {
+  background: #fdecec;
+  color: #c0392b;
+}
+
+.status-pendiente {
+  background: #fff4d9;
+  color: #a16d00;
+}
+
+/* ============================================================
+   Selector de fotografía (perfil / registro de tutor)
+   ============================================================ */
+.foto-picker {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.foto-avatar,
+.foto-avatar-placeholder {
+  width: 84px;
+  height: 84px;
+  flex: 0 0 84px;
+  border-radius: 50%;
+}
+
+.foto-avatar {
+  object-fit: cover;
+  border: 3px solid var(--blue-light);
+}
+
+.foto-avatar-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--blue-light);
+  color: #4b52db;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 3px var(--blue-light);
+}
+
+.foto-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 0;
+  background: #e5e7eb;
+  color: #374151;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color .12s ease;
+}
+
+.foto-picker-btn:hover {
+  background: #d1d5db;
+}
+
+.foto-picker-hint {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tag-materia-seleccionada {
+  background: #d1d5db;
+  color: #1f2937;
 }

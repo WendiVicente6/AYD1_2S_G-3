@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-
 import jwt
 from flask import current_app, request
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -64,10 +63,7 @@ def password_is_valid(password, stored_password):
         return False
 
     try:
-        return check_password_hash(
-            stored_password,
-            password
-        )
+        return check_password_hash(stored_password, password)
     except (ValueError, TypeError):
         return False
 

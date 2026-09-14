@@ -69,7 +69,7 @@ export default function RegisterStudent() {
           <label>Fotografía<input type="file" accept="image/*" disabled title="La carga se integrará con almacenamiento BYTEA." /></label>
           <label>Correo electrónico<input name="correo" type="email" value={form.correo} onChange={update} required /></label>
           <label>Contraseña
-            <input name="password" type="password" minLength="8" value={form.password} onChange={update} required />
+            <input name="password" type="password" minLength="8" value={form.password} onChange={update} autoComplete="new-password" required />
             <small>Mínimo 8 caracteres, una mayúscula, una minúscula y un número.</small>
           </label>
 

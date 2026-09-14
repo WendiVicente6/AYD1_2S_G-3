@@ -216,7 +216,7 @@ def register_tutor():
                  id_estado_usr, sn_activo)
             VALUES
                 (%s, %s, %s, %s, %s, %s,
-                 %s, %s, NULL, %s, %s,
+                 %s, %s, %s, %s, %s,
                  %s, 0)
             RETURNING id_usuario
             """,
@@ -229,9 +229,10 @@ def register_tutor():
                 data["direccion"].strip(),        # 6
                 data.get("telefono", "").strip() or None, # 7
                 data["fec_nac"],                  # 8
-                data["correo"].strip().lower(),   # 9
-                generate_password_hash(data["password"]), # 10
-                state_id                          # 11
+                data["foto"].encode("utf-8"),     # 9
+                data["correo"].strip().lower(),   # 10
+                generate_password_hash(data["password"]), # 11
+                state_id                          # 12
             )
         )
         user_id = cur.fetchone()[0]

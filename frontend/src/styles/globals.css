@@ -1,3 +1,4 @@
+@import "tailwindcss";
 * { box-sizing: border-box; }
 
 :root {
@@ -37,6 +38,7 @@ button { cursor: pointer; }
 .user-card span { color: #94a0b9; font-size: 11px; margin-top: 2px; }
 .avatar { width: 35px; height: 35px; flex: 0 0 35px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; }
 .avatar-purple { background: #4c54e8; color: #fff; }
+.avatar-img { object-fit: cover; }
 .logout-button { color: #cdd5e5; border: 0; background: transparent; padding: 13px 10px 0; display: flex; align-items: center; gap: 10px; font-size: 13px; }
 
 .main-content { margin-left: 252px; flex: 1; min-width: 0; }
