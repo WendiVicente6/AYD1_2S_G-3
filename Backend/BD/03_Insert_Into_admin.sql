@@ -26,3 +26,15 @@ VALUES (
     2,
     1
 );
+
+select * from tusuario
+
+UPDATE tusuario
+SET sn_activo = 1
+WHERE id_usuario=12;
+
+ALTER TABLE tusuario 
+ADD COLUMN password_auth2 VARCHAR(250);
+
+
+
