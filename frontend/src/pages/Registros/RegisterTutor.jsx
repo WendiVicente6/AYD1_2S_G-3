@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { registerTutor } from "../../services/registrationService";
+import { useNavigate } from "react-router-dom";
 
 const initialForm = {
   nombres: "",
@@ -20,6 +21,7 @@ const initialForm = {
 };
 
 export default function RegisterTutor() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [materiaInput, setMateriaInput] = useState("");
   const [message, setMessage] = useState("");
@@ -110,6 +112,11 @@ export default function RegisterTutor() {
           </label>
 
           <button disabled={loading}>{loading ? "Registrando..." : "Registrar tutor"}</button>
+          <button type="button" className="btn-volver-login"
+            onClick={() => navigate("/login")}
+          >
+            ← Volver al Login
+          </button>
         </form>
       </div>
     </section>

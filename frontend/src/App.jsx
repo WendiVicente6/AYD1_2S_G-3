@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-
 import Login from "./pages/Login/Login";
 import AdminDashboard from "./pages/Dashboard/AdminDashboard";
 import TutorDashboard from "./pages/Dashboard/TutorDashboard";
@@ -13,6 +12,8 @@ import Auth2 from "./pages/Auth2/Auth2";
 
 import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
+import Register from "./pages/Registros/Register";
+
 
 import SetSchedule from "./pages/Horarios/SetSchedule";
 
@@ -22,6 +23,7 @@ import PendingSessions from "./pages/Sesiones/PendingSessions";
 import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
 
 import Profile from "./pages/Profile/Profile";
+import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
 
 export default function App() {
   return (
@@ -103,17 +105,14 @@ export default function App() {
           }
         />
 
-        <Route
-          path="/students"
-          element={
-            <ProtectedRoute role="admin">
-              <Placeholder
-                title="Estudiantes"
-                description="Gestión y consulta de estudiantes."
-              />
-            </ProtectedRoute>
-          }
-        />
+<Route
+  path="/students"
+  element={
+    <ProtectedRoute role="admin">
+      <AprobarEstudiantes />
+    </ProtectedRoute>
+  }
+/>
 
         <Route
           path="/tutors"
@@ -148,6 +147,8 @@ export default function App() {
           }
         />
       </Route>
+
+      <Route path="/register" element={<Register />} />
 
       <Route path="/register/student" element={<RegisterStudent />} />
 

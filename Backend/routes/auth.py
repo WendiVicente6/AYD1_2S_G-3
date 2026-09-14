@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from flask import Blueprint, jsonify, request
 from conexion.db import get_connection
@@ -6,11 +7,14 @@ from auth import (
     create_token,
     normalize_role,
     password_is_valid,
+    hash_password,
     decode_token,
     get_bearer_token
 )
 
 auth_bp = Blueprint("auth", __name__)
+
+PASSWORD_RE = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 
 USER_SELECT = """
 SELECT u.id_usuario, u.nombres, u.apellidos, u.correo, u.password,
@@ -46,6 +50,7 @@ def find_user_by_email(correo):
     with get_connection() as conn:
         with conn.cursor() as cur:
             cur.execute(
+
                 USER_SELECT + " WHERE LOWER(u.correo)=LOWER(%s) LIMIT 1",
                 (correo,)
             )
@@ -138,7 +143,7 @@ def login():
                 if cur.fetchone() is None:
                     return jsonify({
                         "ok": False,
-                        "message": "El usuario tiene rol Tutor, pero no tiene registro en ttutor."
+                        "message": "El usuario tiene rol Tutor, pero no tiene registro en tutor."
                     }), 403
 
     user["role"] = role
@@ -215,13 +220,39 @@ def update_me():
     data = request.get_json(silent=True) or {}
 
     # Campos editables por el propio usuario.
-    # OJO: correo, carnet, password, id_rol e id_estado_usr NO se tocan aquí.
+    # OJO: correo, carnet, id_rol e id_estado_usr NO se tocan aquí.
     editable_fields = ["nombres", "apellidos", "direccion", "telefono", "fec_nac", "genero"]
 
     updates = {}
     for field in editable_fields:
         if field in data:
             updates[field] = data[field]
+
+    # Cambio de contraseña (opcional)
+    current_password = data.get("password_actual")
+    new_password = data.get("password_nueva")
+
+    if current_password or new_password:
+        if not current_password or not new_password:
+            return jsonify({
+                "ok": False,
+                "message": "Para cambiar la contraseña debes indicar la contraseña actual y la nueva."
+            }), 400
+
+        current_user = find_user_by_id(user_id)
+        if not current_user or not password_is_valid(current_password, current_user["password"]):
+            return jsonify({
+                "ok": False,
+                "message": "La contraseña actual no es correcta."
+            }), 401
+
+        if not PASSWORD_RE.match(new_password):
+            return jsonify({
+                "ok": False,
+                "message": "La nueva contraseña debe tener mínimo 8 caracteres, una minúscula, una mayúscula y un número."
+            }), 400
+
+        updates["password"] = hash_password(new_password)
 
     if not updates:
         return jsonify({
