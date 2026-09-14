@@ -144,7 +144,7 @@ export default function PerfilTutor() {
     <section>
       <div className="page-heading">
         <div>
-          <h2>Configuración</h2>
+          <h2>Mi perfil</h2>
           <p>Edita tu información personal y profesional como tutor.</p>
         </div>
       </div>
