@@ -12,6 +12,8 @@ import Auth2 from "./pages/Auth2/Auth2";
 
 import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
+import Register from "./pages/Registros/Register";
+
 
 import SetSchedule from "./pages/Horarios/SetSchedule";
 
@@ -136,6 +138,8 @@ export default function App() {
         />
 
       </Route>
+
+      <Route path="/register" element={<Register />} />
 
       <Route
         path="/register/student"

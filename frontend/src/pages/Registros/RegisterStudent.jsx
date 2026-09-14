@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { registerStudent } from "../../services/registrationService";
+import { useNavigate } from "react-router-dom";
+
+
 
 const initialForm = {
   nombres: "",
@@ -14,6 +17,7 @@ const initialForm = {
 };
 
 export default function RegisterStudent() {
+  const navigate = useNavigate();
   const [form, setForm] = useState(initialForm);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -70,6 +74,11 @@ export default function RegisterStudent() {
           </label>
 
           <button disabled={loading}>{loading ? "Registrando..." : "Registrar estudiante"}</button>
+          <button type="button" className="btn-volver-login"
+            onClick={() => navigate("/login")}
+          >
+            ← Volver al Login
+          </button>
         </form>
       </div>
     </section>
