@@ -84,11 +84,7 @@ def register_student():
             }), 500
 
         foto = data.get("foto")
-        foto_bytes = None
-        if foto:
-            # El frontend puede enviar una cadena/base64 en una futura ampliación.
-            # Para esta HU se deja NULL si no se implementa carga binaria.
-            foto_bytes = None
+        foto_bytes = foto.encode("utf-8") if foto else None
 
         cur.execute(
             """

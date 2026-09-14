@@ -34,8 +34,8 @@ export default function Login() {
 
       const user = await login(correo.trim(), password);
 
-      console.log("USUARIO DESDE LOGIN:", user);
-      console.log("ROL:", user.role);
+      //console.log("USUARIO DESDE LOGIN:", user);
+      //console.log("ROL:", user.role);
 
       if (user.role === "admin") {
         navigate("/auth2", { replace: true });

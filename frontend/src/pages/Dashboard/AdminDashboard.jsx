@@ -21,7 +21,7 @@ export default function AdminDashboard() {
       try {
         const data = await getDashboard();
 
-        console.log("Datos del dashboard:", data);
+        //console.log("Datos del dashboard:", data);
 
         setDashboard(data);
       } catch (err) {
