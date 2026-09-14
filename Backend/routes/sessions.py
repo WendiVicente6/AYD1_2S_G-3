@@ -352,3 +352,63 @@ def attend_session(id_sesion):
         return jsonify({"ok": True, "message": "Sesión marcada como atendida correctamente."})
     except Error:
         return jsonify({"ok": False, "message": "No fue posible registrar la sesión como atendida."}), 500
+
+
+# HU-0010  Cancelar sesión desde el módulo estudiante
+@sessions_bp.put("/sesiones/<int:id_sesion>/cancelar")
+def cancelar_sesion_estudiante(id_sesion):
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    if payload.get("role") != "student":
+        return jsonify({"ok": False, "message": "No tienes permisos para esta acción."}), 403
+
+    id_estudiante = int(payload["sub"])
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # La sesión debe existir, ser del estudiante autenticado y seguir activa
+                cur.execute(
+                    """
+                    SELECT s.id_sesion, es.txt_desc AS estado
+                    FROM tsesion s
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    WHERE s.id_sesion = %s AND s.id_estudiante = %s
+                    """,
+                    (id_sesion, id_estudiante),
+                )
+                sesion = cur.fetchone()
+
+                if sesion is None:
+                    return jsonify({"ok": False, "message": "La sesión no existe o no te pertenece."}), 404
+
+                if sesion["estado"] not in ("Pendiente", "Confirmada"):
+                    return jsonify({
+                        "ok": False,
+                        "message": f"No se puede cancelar: la sesión ya está en estado '{sesion['estado']}'."
+                    }), 409
+
+                # Se marca como Cancelada y se deja constancia de quién la canceló.
+                # El horario queda libre automáticamente: las consultas de
+                # disponibilidad y de traslape solo cuentan sesiones con
+                # estado distinto de "Cancelada".
+                cur.execute(
+                    """
+                    UPDATE tsesion
+                    SET motivo_cancelacion = 'Cancelada por el estudiante',
+                        id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Cancelada')
+                    WHERE id_sesion = %s
+                    """,
+                    (id_sesion,),
+                )
+            conn.commit()
+
+        return jsonify({"ok": True, "message": "Sesión cancelada correctamente."})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible cancelar la sesión."}), 500
