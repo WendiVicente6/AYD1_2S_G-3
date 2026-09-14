@@ -1,8 +1,7 @@
 import { useState } from "react";
+import { Camera, User } from "lucide-react";
 import { registerStudent } from "../../services/registrationService";
 import { useNavigate } from "react-router-dom";
-
-
 
 const initialForm = {
   nombres: "",
@@ -14,7 +13,19 @@ const initialForm = {
   fec_nac: "",
   correo: "",
   password: "",
+  foto: "",
 };
+
+const TIPOS_FOTO_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function RegisterStudent() {
   const navigate = useNavigate();
@@ -25,6 +36,21 @@ export default function RegisterStudent() {
 
   const update = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  const onFotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!TIPOS_FOTO_PERMITIDOS.includes(file.type)) {
+      setError("La fotografía debe ser un archivo JPG, PNG o WEBP.");
+      e.target.value = "";
+      return;
+    }
+
+    setError("");
+    const dataUrl = await fileToDataUrl(file);
+    setForm((prev) => ({ ...prev, foto: dataUrl }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -66,7 +92,31 @@ export default function RegisterStudent() {
           <label>Dirección<input name="direccion" value={form.direccion} onChange={update} required /></label>
           <label>Teléfono<input name="telefono" value={form.telefono} onChange={update} /></label>
           <label>Fecha de nacimiento<input name="fec_nac" type="date" value={form.fec_nac} onChange={update} required /></label>
-          <label>Fotografía<input type="file" accept="image/*" disabled title="La carga se integrará con almacenamiento BYTEA." /></label>
+
+          <div style={{ gridColumn: "1/-1" }}>
+            <div className="foto-picker">
+              {form.foto ? (
+                <img src={form.foto} alt="Vista previa" className="foto-avatar" />
+              ) : (
+                <div className="foto-avatar-placeholder"><User size={32} /></div>
+              )}
+              <div>
+                <label htmlFor="foto-estudiante-input" className="foto-picker-btn">
+                  <Camera size={16} />
+                  {form.foto ? "Cambiar foto" : "Subir foto"}
+                </label>
+                <p className="foto-picker-hint">JPG, PNG o WEBP (opcional)</p>
+              </div>
+              <input
+                id="foto-estudiante-input"
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                onChange={onFotoChange}
+                style={{ display: "none" }}
+              />
+            </div>
+          </div>
+
           <label>Correo electrónico<input name="correo" type="email" value={form.correo} onChange={update} required /></label>
           <label>Contraseña
             <input name="password" type="password" minLength="8" value={form.password} onChange={update} autoComplete="new-password" required />

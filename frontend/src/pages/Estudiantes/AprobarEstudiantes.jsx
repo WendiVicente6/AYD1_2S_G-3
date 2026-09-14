@@ -15,7 +15,7 @@ export default function AprobarEstudiantes() {
     const cargarEstudiantes = async () => {
       try {
         const data = await getPendingStudents();
-        console.log("Estudiantes recibidos:", data);
+        //console.log("Estudiantes recibidos:", data);
 
         setEstudiantes(data.estudiantes || []);
       } catch (err) {

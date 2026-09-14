@@ -8,6 +8,8 @@ const PAGE_TITLES = {
   "/student/dashboard": "Dashboard",
   "/tutor/dashboard": "Dashboard",
   "/tutor/schedule": "Mi horario",
+  "/tutor/historial": "Historial de Sesiones",
+  "/tutor/perfil": "Mi perfil",
   "/students": "Estudiantes",
   "/tutors": "Tutores",
   "/sessions": "Sesiones",

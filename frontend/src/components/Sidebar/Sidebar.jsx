@@ -19,7 +19,7 @@ const LINKS_BY_ROLE = {
     { to: "/tutor/schedule", label: "Mi horario", icon: Clock },
     { to: "/sessions", label: "Sesiones", icon: CalendarDays },
     { to: "/tutor/historial", label: "Historial de Sesiones", icon: BarChart3 },
-
+    { to: "/tutor/perfil", label: "Mi perfil", icon: UserRound },
   ],
   student: [
     { to: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,11 +28,6 @@ const LINKS_BY_ROLE = {
     { to: "/student/mis-sesiones", label: "Mis sesiones", icon: Clock },
     { to: "/student/profile", label: "Mi perfil", icon: UserRound },
   ],
-};
-
-// Ruta de configuración/perfil disponible según el rol (si no hay entrada, el botón queda inactivo).
-const PERFIL_ROUTE_BY_ROLE = {
-  tutor: "/tutor/perfil",
 };
 
 const ROLE_LABELS = {
@@ -54,7 +49,6 @@ export default function Sidebar() {
   const role = user?.role;
   const links = LINKS_BY_ROLE[role] || [];
   const roleLabel = ROLE_LABELS[role] || "Usuario";
-  const perfilRoute = PERFIL_ROUTE_BY_ROLE[role];
   const displayName = user ? `${user.nombres} ${user.apellidos}`.trim() : "Usuario";
   const initials = getInitials(user?.nombres, user?.apellidos);
 
@@ -79,17 +73,10 @@ export default function Sidebar() {
         ))}
 
         <p className="nav-label nav-label-spaced">SISTEMA</p>
-        {perfilRoute ? (
-          <NavLink to={perfilRoute} className={({ isActive }) => `nav-item nav-button ${isActive ? "active" : ""}`}>
-            <Settings size={19} />
-            <span>Configuración</span>
-          </NavLink>
-        ) : (
-          <button className="nav-item nav-button" type="button">
-            <Settings size={19} />
-            <span>Configuración</span>
-          </button>
-        )}
+        <button className="nav-item nav-button" type="button">
+          <Settings size={19} />
+          <span>Configuración</span>
+        </button>
       </nav>
 
       <div className="sidebar-footer">
