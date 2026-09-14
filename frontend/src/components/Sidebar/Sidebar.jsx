@@ -1,18 +1,59 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../../pages/context/AuthContext";
+
 import {
-  BarChart3, CalendarDays, GraduationCap, LayoutDashboard,
-  LogOut, Settings, Users
+  BarChart3, CalendarDays, Clock, GraduationCap, LayoutDashboard,
+  LogOut, Search, Settings, Users
 } from "lucide-react";
 
-const links = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/students", label: "Estudiantes", icon: GraduationCap },
-  { to: "/tutors", label: "Tutores", icon: Users },
-  { to: "/sessions", label: "Sesiones", icon: CalendarDays },
-  { to: "/reports", label: "Reportes", icon: BarChart3 },
-];
+// Links disponibles según el rol del usuario autenticado.
+const LINKS_BY_ROLE = {
+  admin: [
+    { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/students", label: "Estudiantes", icon: GraduationCap },
+    { to: "/tutors", label: "Tutores", icon: Users },
+    { to: "/reports", label: "Reportes", icon: BarChart3 },
+  ],
+  tutor: [
+    { to: "/tutor/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/tutor/schedule", label: "Mi horario", icon: Clock },
+    { to: "/sessions", label: "Sesiones", icon: CalendarDays },
+  ],
+  student: [
+    { to: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/student/tutores", label: "Buscar tutores", icon: Search },
+    { to: "/student/programar-sesion", label: "Programar sesión", icon: CalendarDays },
+    { to: "/student/mis-sesiones", label: "Mis sesiones", icon: Clock },
+  ],
+};
+
+const ROLE_LABELS = {
+  admin: "Administrador",
+  tutor: "Tutor",
+  student: "Estudiante",
+};
+
+function getInitials(nombres, apellidos) {
+  const first = nombres?.trim()?.[0] || "";
+  const second = apellidos?.trim()?.[0] || "";
+  return (first + second).toUpperCase() || "U";
+}
 
 export default function Sidebar() {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const role = user?.role;
+  const links = LINKS_BY_ROLE[role] || [];
+  const roleLabel = ROLE_LABELS[role] || "Usuario";
+  const displayName = user ? `${user.nombres} ${user.apellidos}`.trim() : "Usuario";
+  const initials = getInitials(user?.nombres, user?.apellidos);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -37,13 +78,19 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="user-card">
-          <div className="avatar avatar-purple">AD</div>
+          <div className="avatar avatar-purple">{initials}</div>
           <div>
-            <strong>Administrador</strong>
-            <span>Administrador</span>
+            <strong>{displayName}</strong>
+            <span>{roleLabel}</span>
           </div>
         </div>
-        <button className="logout-button" type="button">
+        <button
+          className="logout-button"
+          id="logout-button"
+          name="logout-button"
+          type="button"
+          onClick={handleLogout}
+        >
           <LogOut size={18} />
           Cerrar sesión
         </button>

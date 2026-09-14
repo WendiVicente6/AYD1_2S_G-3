@@ -2,12 +2,14 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
+import { AuthProvider } from "./pages/context/AuthContext";
 import "./styles/globals.css";
+import "./styles/registration.css";
+import "./styles/tutores.css";
+import "./styles/register.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <BrowserRouter><AuthProvider><App /></AuthProvider></BrowserRouter>
   </React.StrictMode>
 );

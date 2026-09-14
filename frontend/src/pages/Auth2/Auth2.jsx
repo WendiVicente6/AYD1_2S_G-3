@@ -44,6 +44,8 @@ export default function Auth2() {
       }
 
       navigate("/dashboard");
+      /*navigate("/dashboard");*/
+      navigate("/admin/dashboard", { replace: true });
     } catch (error) {
       setError("No se pudo conectar con el servidor");
     } finally {
