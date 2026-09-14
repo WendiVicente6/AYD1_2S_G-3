@@ -50,7 +50,8 @@ def password_is_valid(password, stored_password):
         return False
 
 
-
+def hash_password(password):
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 

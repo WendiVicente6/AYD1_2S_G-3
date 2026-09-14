@@ -27,3 +27,16 @@ export async function getMe() {
   sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
   return data.user;
 }
+
+
+export async function updateMe(payload) {
+  const token = getToken();
+  if (!token) throw new Error("No hay sesión activa.");
+  const data = await apiRequest("/auth/me", {
+    method: "PUT",
+    headers: {Authorization: `Bearer ${token}`},
+    body: JSON.stringify(payload),
+  });
+  sessionStorage.setItem(USER_KEY, JSON.stringify(data.user));
+  return data.user;
+}

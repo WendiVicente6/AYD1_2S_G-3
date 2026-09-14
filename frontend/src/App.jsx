@@ -21,6 +21,8 @@ import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
 import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
 
+import Profile from "./pages/Profile/Profile";
+
 export default function App() {
   return (
     <Routes>
@@ -29,7 +31,6 @@ export default function App() {
       <Route path="/auth2" element={<Auth2 />} />
 
       <Route element={<DashboardLayout />}>
-
         <Route
           path="/admin/dashboard"
           element={
@@ -62,6 +63,15 @@ export default function App() {
           element={
             <ProtectedRoute role="student">
               <ProgramarSesion />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/profile"
+          element={
+            <ProtectedRoute role= "student">
+              <Profile />
             </ProtectedRoute>
           }
         />
@@ -137,28 +147,15 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
       </Route>
 
-      <Route
-        path="/register/student"
-        element={<RegisterStudent />}
-      />
+      <Route path="/register/student" element={<RegisterStudent />} />
 
-      <Route
-        path="/register/tutor"
-        element={<RegisterTutor />}
-      />
+      <Route path="/register/tutor" element={<RegisterTutor />} />
 
-      <Route
-        path="/"
-        element={<Navigate to="/login" replace />}
-      />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route
-        path="*"
-        element={<Navigate to="/login" replace />}
-      />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }
