@@ -3,7 +3,7 @@ import { useAuth } from "../../pages/context/AuthContext";
 
 import {
   BarChart3, CalendarDays, Clock, GraduationCap, LayoutDashboard,
-  LogOut, Search, Settings, Users
+  LogOut, Search, Users, UserRound, History
 } from "lucide-react";
 
 // Links disponibles según el rol del usuario autenticado.
@@ -18,12 +18,16 @@ const LINKS_BY_ROLE = {
     { to: "/tutor/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/tutor/schedule", label: "Mi horario", icon: Clock },
     { to: "/sessions", label: "Sesiones", icon: CalendarDays },
+    { to: "/tutor/historial", label: "Historial de Sesiones", icon: BarChart3 },
+    { to: "/tutor/perfil", label: "Mi perfil", icon: UserRound },
   ],
   student: [
     { to: "/student/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/student/tutores", label: "Buscar tutores", icon: Search },
     { to: "/student/programar-sesion", label: "Programar sesión", icon: CalendarDays },
     { to: "/student/mis-sesiones", label: "Mis sesiones", icon: Clock },
+    { to: "/student/profile", label: "Mi perfil", icon: UserRound },
+    { to: "/student/historial", label: "Historial", icon: History },
   ],
 };
 
@@ -68,17 +72,15 @@ export default function Sidebar() {
             <span>{label}</span>
           </NavLink>
         ))}
-
-        <p className="nav-label nav-label-spaced">SISTEMA</p>
-        <button className="nav-item nav-button" type="button">
-          <Settings size={19} />
-          <span>Configuración</span>
-        </button>
       </nav>
 
       <div className="sidebar-footer">
         <div className="user-card">
-          <div className="avatar avatar-purple">{initials}</div>
+          {user?.foto ? (
+            <img src={user.foto} alt="Foto de perfil" className="avatar avatar-img" />
+          ) : (
+            <div className="avatar avatar-purple">{initials}</div>
+          )}
           <div>
             <strong>{displayName}</strong>
             <span>{roleLabel}</span>

@@ -51,3 +51,36 @@ export async function attendSession(idSesion, resumen) {
     body: JSON.stringify({ resumen }),
   });
 }
+
+export async function cancelarSesion(idSesion) {
+  const token = getToken();
+  return apiRequest(`/sesiones/${idSesion}/cancelar`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function confirmSession(idSesion) {
+  const token = getToken();
+  return apiRequest(`/tutors/sessions/${idSesion}/confirm`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function cancelSession(idSesion, motivo) {
+  const token = getToken();
+  return apiRequest(`/tutors/sessions/${idSesion}/cancel`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ motivo }),
+  });
+}
+
+export async function getHistorialSesiones() {
+  const token = getToken();
+  const data = await apiRequest("/sesiones/historial", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.sesiones;
+}

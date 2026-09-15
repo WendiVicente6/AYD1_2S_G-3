@@ -1,4 +1,3 @@
-import base64
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
@@ -71,9 +70,7 @@ def listar_tutores_disponibles():
 
     tutores = []
     for fila in filas:
-        foto_data = None
-        if fila["foto"] is not None:
-            foto_data = "data:image/*;base64," + base64.b64encode(bytes(fila["foto"])).decode("ascii")
+        foto_data = bytes(fila["foto"]).decode("utf-8") if fila["foto"] else None
         tutores.append({
             "id_tutor": fila["id_tutor"],
             "nombre_completo": fila["nombre_completo"],

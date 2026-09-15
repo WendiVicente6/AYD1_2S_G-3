@@ -14,14 +14,19 @@ import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
 import Register from "./pages/Registros/Register";
 
-
 import SetSchedule from "./pages/Horarios/SetSchedule";
 
 import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
 import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
+
+import Profile from "./pages/Profile/Profile";
 import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
+import Historial from "./pages/Tutores/Historial";
+import PerfilTutor from "./pages/Tutores/PerfilTutor";
+
+import HistorialSesiones from "./pages/Sesiones/HistorialSesiones";
 
 export default function App() {
   return (
@@ -31,7 +36,6 @@ export default function App() {
       <Route path="/auth2" element={<Auth2 />} />
 
       <Route element={<DashboardLayout />}>
-
         <Route
           path="/admin/dashboard"
           element={
@@ -69,6 +73,24 @@ export default function App() {
         />
 
         <Route
+          path="/student/profile"
+          element={
+            <ProtectedRoute role="student">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/historial"
+          element={
+            <ProtectedRoute role="student">
+              <HistorialSesiones />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/student/mis-sesiones"
           element={
             <ProtectedRoute role="student">
@@ -95,14 +117,14 @@ export default function App() {
           }
         />
 
-<Route
-  path="/students"
-  element={
-    <ProtectedRoute role="admin">
-      <AprobarEstudiantes />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/students"
+          element={
+            <ProtectedRoute role="admin">
+              <AprobarEstudiantes />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/tutors"
@@ -137,29 +159,34 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/tutor/historial"
+          element={
+            <ProtectedRoute role="tutor">
+              <Historial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tutor/perfil"
+          element={
+            <ProtectedRoute role="tutor">
+              <PerfilTutor />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="/register" element={<Register />} />
 
-      <Route
-        path="/register/student"
-        element={<RegisterStudent />}
-      />
+      <Route path="/register/student" element={<RegisterStudent />} />
 
-      <Route
-        path="/register/tutor"
-        element={<RegisterTutor />}
-      />
+      <Route path="/register/tutor" element={<RegisterTutor />} />
 
-      <Route
-        path="/"
-        element={<Navigate to="/login" replace />}
-      />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
-      <Route
-        path="*"
-        element={<Navigate to="/login" replace />}
-      />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

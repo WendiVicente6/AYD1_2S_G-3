@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getMe, getStoredUser, login as loginRequest, logout as logoutRequest } from "../../services/authService";
+import { getMe, getStoredUser, login as loginRequest, logout as logoutRequest, updateMe as updateMeRequest } from "../../services/authService";
 
 const AuthContext = createContext(null);
 
@@ -24,6 +24,18 @@ export function AuthProvider({children}) {
   }
   function logout() { logoutRequest(); setUser(null); }
 
-  return <AuthContext.Provider value={{user, loading, login, logout}}>{children}</AuthContext.Provider>;
+  async function updateProfile(payload) {
+    const updatedUser = await updateMeRequest(payload);
+    setUser(updatedUser);
+    return updatedUser;
+  }
+
+  async function refreshUser() {
+    const currentUser = await getMe();
+    setUser(currentUser);
+    return currentUser;
+  }
+
+  return <AuthContext.Provider value={{user, loading, login, logout, updateProfile, refreshUser}}>{children}</AuthContext.Provider>;
 }
 export function useAuth() { return useContext(AuthContext); }

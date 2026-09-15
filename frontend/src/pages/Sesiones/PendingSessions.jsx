@@ -1,11 +1,21 @@
 import { useEffect, useState } from "react";
 import { Inbox } from "lucide-react";
-import { getPendingSessions, attendSession } from "../../services/sessionsService";
+import {
+  getPendingSessions,
+  attendSession,
+  confirmSession,
+  cancelSession,
+} from "../../services/sessionsService";
 
 function formatFecha(fechaISO) {
   const [anio, mes, dia] = fechaISO.split("-");
   return `${dia}/${mes}/${anio}`;
 }
+
+const overlayStyle = {
+  position: "fixed", inset: 0, background: "rgba(15,23,42,.45)",
+  display: "grid", placeItems: "center", zIndex: 50,
+};
 
 export default function PendingSessions() {
   const [sesiones, setSesiones] = useState([]);
@@ -13,9 +23,12 @@ export default function PendingSessions() {
   const [error, setError] = useState("");
   const [mensajeGlobal, setMensajeGlobal] = useState("");
 
-  // Estado del modal de "Atender"
-  const [sesionSeleccionada, setSesionSeleccionada] = useState(null);
+  // Modal de acciones: sesión seleccionada + qué vista mostrar dentro del modal
+  const [accionesSesion, setAccionesSesion] = useState(null);
+  const [vista, setVista] = useState("menu"); // "menu" | "atender" | "cancelar"
+
   const [resumen, setResumen] = useState("");
+  const [motivoCancelacion, setMotivoCancelacion] = useState("");
   const [errorModal, setErrorModal] = useState("");
   const [guardando, setGuardando] = useState(false);
 
@@ -34,16 +47,45 @@ export default function PendingSessions() {
     cargarSesiones();
   }, []);
 
-  function abrirModal(sesion) {
-    setSesionSeleccionada(sesion);
+  function abrirAcciones(sesion) {
+    setAccionesSesion(sesion);
+    setVista("menu");
     setResumen("");
+    setMotivoCancelacion("");
     setErrorModal("");
   }
 
   function cerrarModal() {
-    setSesionSeleccionada(null);
+    setAccionesSesion(null);
+    setVista("menu");
     setResumen("");
+    setMotivoCancelacion("");
     setErrorModal("");
+  }
+
+  function actualizarEstado(idSesion, nuevoEstado) {
+    setSesiones((prev) =>
+      prev.map((s) => (s.id_sesion === idSesion ? { ...s, estado: nuevoEstado } : s))
+    );
+  }
+
+  function quitarSesion(idSesion) {
+    setSesiones((prev) => prev.filter((s) => s.id_sesion !== idSesion));
+  }
+
+  async function confirmarSesion() {
+    setErrorModal("");
+    setGuardando(true);
+    try {
+      const result = await confirmSession(accionesSesion.id_sesion);
+      setMensajeGlobal(result.message);
+      actualizarEstado(accionesSesion.id_sesion, "Confirmada");
+      cerrarModal();
+    } catch (err) {
+      setErrorModal(err.message);
+    } finally {
+      setGuardando(false);
+    }
   }
 
   async function confirmarAtencion(e) {
@@ -57,11 +99,32 @@ export default function PendingSessions() {
 
     setGuardando(true);
     try {
-      const result = await attendSession(sesionSeleccionada.id_sesion, resumen.trim());
+      const result = await attendSession(accionesSesion.id_sesion, resumen.trim());
       setMensajeGlobal(result.message);
+      quitarSesion(accionesSesion.id_sesion);
       cerrarModal();
-      // Quitar la sesión atendida de la lista sin tener que re-consultar todo
-      setSesiones((prev) => prev.filter((s) => s.id_sesion !== sesionSeleccionada.id_sesion));
+    } catch (err) {
+      setErrorModal(err.message);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function confirmarCancelacion(e) {
+    e.preventDefault();
+    setErrorModal("");
+
+    if (!motivoCancelacion.trim()) {
+      setErrorModal("El motivo de la cancelación es obligatorio.");
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const result = await cancelSession(accionesSesion.id_sesion, motivoCancelacion.trim());
+      setMensajeGlobal(result.message);
+      quitarSesion(accionesSesion.id_sesion);
+      cerrarModal();
     } catch (err) {
       setErrorModal(err.message);
     } finally {
@@ -104,8 +167,8 @@ export default function PendingSessions() {
                   <span>{s.materia} — {s.motivo || "Sin motivo especificado"}</span>
                 </div>
                 <time>{s.hora_inicio} - {s.hora_final}</time>
-                <button className="text-button" onClick={() => abrirModal(s)}>
-                  Atender
+                <button className="text-button" onClick={() => abrirAcciones(s)}>
+                  Acciones
                 </button>
               </div>
             ))}
@@ -113,47 +176,103 @@ export default function PendingSessions() {
         </article>
       )}
 
-      {sesionSeleccionada && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          style={{
-            position: "fixed", inset: 0, background: "rgba(15,23,42,.45)",
-            display: "grid", placeItems: "center", zIndex: 50,
-          }}
-        >
+      {accionesSesion && (
+        <div role="dialog" aria-modal="true" style={overlayStyle}>
           <div className="registration-card" style={{ width: "min(480px, 90vw)" }}>
-            <h2 style={{ marginTop: 0 }}>Atender sesión</h2>
+            <h2 style={{ marginTop: 0 }}>
+              {vista === "menu" && "Acciones de la sesión"}
+              {vista === "atender" && "Atender sesión"}
+              {vista === "cancelar" && "Cancelar sesión"}
+            </h2>
             <p>
-              <strong>{sesionSeleccionada.estudiante}</strong> — {sesionSeleccionada.materia}
+              <strong>{accionesSesion.estudiante}</strong> — {accionesSesion.materia}
               <br />
-              {formatFecha(sesionSeleccionada.fecha)} · {sesionSeleccionada.hora_inicio} - {sesionSeleccionada.hora_final}
+              {formatFecha(accionesSesion.fecha)} · {accionesSesion.hora_inicio} - {accionesSesion.hora_final}
             </p>
 
             {errorModal && <div className="alert error">{errorModal}</div>}
 
-            <form onSubmit={confirmarAtencion} className="registration-form" style={{ gridTemplateColumns: "1fr" }}>
-              <label>
-                Resumen de la sesión
-                <textarea
-                  rows={4}
-                  value={resumen}
-                  onChange={(e) => setResumen(e.target.value)}
-                  placeholder="Temas cubiertos, recomendaciones, próximos pasos..."
-                  style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
-                  required
-                />
-              </label>
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button type="button" onClick={cerrarModal} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
-                  Cancelar
+            {vista === "menu" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {accionesSesion.estado === "Pendiente" && (
+                  <button type="button" onClick={confirmarSesion} disabled={guardando}>
+                    {guardando ? "Confirmando..." : "Confirmar"}
+                  </button>
+                )}
+                <button type="button" onClick={() => setVista("atender")} disabled={guardando}>
+                  Atender
                 </button>
-                <button type="submit" disabled={guardando}>
-                  {guardando ? "Guardando..." : "Confirmar atención"}
+                <button
+                  type="button"
+                  onClick={() => setVista("cancelar")}
+                  disabled={guardando}
+                  style={{ background: "#fdecec", color: "#c0392b" }}
+                >
+                  Cancelar sesión
+                </button>
+                <button
+                  type="button"
+                  onClick={cerrarModal}
+                  disabled={guardando}
+                  style={{ background: "#e5e7eb", color: "#111827" }}
+                >
+                  Cerrar
                 </button>
               </div>
-            </form>
+            )}
+
+            {vista === "atender" && (
+              <form onSubmit={confirmarAtencion} className="registration-form" style={{ gridTemplateColumns: "1fr" }}>
+                <label>
+                  Resumen de la sesión
+                  <textarea
+                    rows={4}
+                    value={resumen}
+                    onChange={(e) => setResumen(e.target.value)}
+                    placeholder="Temas cubiertos, recomendaciones, próximos pasos..."
+                    style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
+                    required
+                  />
+                </label>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" onClick={() => setVista("menu")} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
+                    Atrás
+                  </button>
+                  <button type="submit" disabled={guardando}>
+                    {guardando ? "Guardando..." : "Confirmar atención"}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {vista === "cancelar" && (
+              <form onSubmit={confirmarCancelacion} className="registration-form" style={{ gridTemplateColumns: "1fr" }}>
+                <label>
+                  Motivo de la cancelación
+                  <textarea
+                    rows={4}
+                    value={motivoCancelacion}
+                    onChange={(e) => setMotivoCancelacion(e.target.value)}
+                    placeholder="Explica brevemente por qué debes cancelar esta sesión..."
+                    style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
+                    required
+                  />
+                </label>
+                <p className="muted-text" style={{ margin: 0 }}>
+                  Se notificará al estudiante por correo con este motivo.
+                </p>
+
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button type="button" onClick={() => setVista("menu")} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
+                    Atrás
+                  </button>
+                  <button type="submit" disabled={guardando} style={{ background: "#c0392b" }}>
+                    {guardando ? "Cancelando..." : "Confirmar cancelación"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

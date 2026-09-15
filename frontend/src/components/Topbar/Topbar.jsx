@@ -8,6 +8,8 @@ const PAGE_TITLES = {
   "/student/dashboard": "Dashboard",
   "/tutor/dashboard": "Dashboard",
   "/tutor/schedule": "Mi horario",
+  "/tutor/historial": "Historial de Sesiones",
+  "/tutor/perfil": "Mi perfil",
   "/students": "Estudiantes",
   "/tutors": "Tutores",
   "/sessions": "Sesiones",
@@ -53,7 +55,11 @@ export default function Topbar() {
           <span>3</span>
         </button>
         <div className="topbar-user">
-          <div className="avatar avatar-purple">{initials}</div>
+          {user?.foto ? (
+            <img src={user.foto} alt="Foto de perfil" className="avatar avatar-img" />
+          ) : (
+            <div className="avatar avatar-purple">{initials}</div>
+          )}
           <div>
             <strong>{displayName}</strong>
             <span>{roleLabel}</span>
