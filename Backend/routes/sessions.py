@@ -556,3 +556,70 @@ def cancel_session(id_sesion):
         print(f"[cancel_session] Error enviando correo de cancelación: {e}")
 
     return jsonify({"ok": True, "message": mensaje})
+
+
+@sessions_bp.get("/sesiones/historial")
+def historial_sesiones():
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    id_estudiante = int(payload["sub"])
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT
+                        s.id_sesion,
+                        s.fec_sesion,
+                        s.motivo,
+                        s.resumen,
+                        s.motivo_cancelacion,
+                        s.id_usuario_cancelacion,
+                        m.nombre AS materia,
+                        u.nombres AS tutor_nombres,
+                        u.apellidos AS tutor_apellidos,
+                        t.dir_tutoria,
+                        es.txt_desc AS estado_raw
+                    FROM tsesion s
+                    JOIN tmateria m ON m.id_materia = s.id_materia
+                    JOIN tusuario u ON u.id_usuario = s.id_tutor
+                    JOIN ttutor t ON t.id_usuario = s.id_tutor
+                    JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    WHERE s.id_estudiante = %s
+                      AND es.txt_desc IN ('Completada', 'Cancelada')
+                    ORDER BY s.fec_sesion DESC
+                    """,
+                    (id_estudiante,),
+                )
+                rows = cur.fetchall()
+
+        sesiones = []
+        for row in rows:
+            if row["estado_raw"] == "Completada":
+                estado = "Atendida"
+            elif row["id_usuario_cancelacion"] == id_estudiante:
+                estado = "Cancelada por el estudiante"
+            else:
+                estado = "Cancelada por el tutor"
+
+            sesiones.append({
+                "id_sesion": row["id_sesion"],
+                "fecha": row["fec_sesion"].strftime("%Y-%m-%d"),
+                "tutor": f"{row['tutor_nombres']} {row['tutor_apellidos']}",
+                "materia": row["materia"],
+                "direccion": row["dir_tutoria"],
+                "motivo": row["motivo"],
+                "resumen": row["resumen"] if row["estado_raw"] == "Completada" else None,
+                "estado": estado,
+            })
+
+        return jsonify({"ok": True, "sesiones": sesiones})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible consultar el historial."}), 500

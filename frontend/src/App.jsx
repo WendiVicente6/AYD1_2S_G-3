@@ -14,7 +14,6 @@ import RegisterStudent from "./pages/Registros/RegisterStudent";
 import RegisterTutor from "./pages/Registros/RegisterTutor";
 import Register from "./pages/Registros/Register";
 
-
 import SetSchedule from "./pages/Horarios/SetSchedule";
 
 import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
@@ -26,6 +25,8 @@ import Profile from "./pages/Profile/Profile";
 import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
 import Historial from "./pages/Tutores/Historial";
 import PerfilTutor from "./pages/Tutores/PerfilTutor";
+
+import HistorialSesiones from "./pages/Sesiones/HistorialSesiones";
 
 export default function App() {
   return (
@@ -74,8 +75,17 @@ export default function App() {
         <Route
           path="/student/profile"
           element={
-            <ProtectedRoute role= "student">
+            <ProtectedRoute role="student">
               <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/historial"
+          element={
+            <ProtectedRoute role="student">
+              <HistorialSesiones />
             </ProtectedRoute>
           }
         />
@@ -107,14 +117,14 @@ export default function App() {
           }
         />
 
-<Route
-  path="/students"
-  element={
-    <ProtectedRoute role="admin">
-      <AprobarEstudiantes />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/students"
+          element={
+            <ProtectedRoute role="admin">
+              <AprobarEstudiantes />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/tutors"
@@ -166,7 +176,6 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
       </Route>
 
       <Route path="/register" element={<Register />} />

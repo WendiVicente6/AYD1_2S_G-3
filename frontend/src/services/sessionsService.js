@@ -76,3 +76,11 @@ export async function cancelSession(idSesion, motivo) {
     body: JSON.stringify({ motivo }),
   });
 }
+
+export async function getHistorialSesiones() {
+  const token = getToken();
+  const data = await apiRequest("/sesiones/historial", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.sesiones;
+}
