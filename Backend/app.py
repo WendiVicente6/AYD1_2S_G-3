@@ -14,6 +14,10 @@ from routes.students import students_bp
 from routes.auth2 import auth2_bp
 from routes.tutor import tutor_sessions_bp
 from routes.adminstudent import admin_bp
+from routes.admintutor import admin_tutor_bp
+from routes.reports import reports_bp
+
+
 
 app = Flask(__name__)
 
@@ -89,6 +93,16 @@ app.register_blueprint(
     url_prefix="/api"
 )
 
+app.register_blueprint(
+    reports_bp, 
+    url_prefix="/api"
+)
+
+
+app.register_blueprint(
+    admin_tutor_bp,
+    url_prefix="/api/admin"
+)
 
 # Ruta para comprobar que el backend funciona
 @app.get("/api/health")
