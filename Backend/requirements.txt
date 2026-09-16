@@ -6,9 +6,9 @@ itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
 Werkzeug==3.1.8
-bcrypt==5.0.0
 pg8000==1.31.5
 psycopg[binary]
 psycopg2-binary
 PyJWT
 python-dotenv
+recharts

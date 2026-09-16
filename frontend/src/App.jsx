@@ -19,13 +19,17 @@ import SetSchedule from "./pages/Horarios/SetSchedule";
 import ProgramarSesion from "./pages/Sesiones/ProgramarSesion";
 import SesionesActivas from "./pages/Sesiones/SesionesActivas";
 import PendingSessions from "./pages/Sesiones/PendingSessions";
-
+import TutoresDisponibles from "./pages/Tutores/TutoresDisponibles";
+import AprobarTutor from "./pages/Tutores/AprobarTutor";
 import Profile from "./pages/Profile/Profile";
 import AprobarEstudiantes from "./pages/Estudiantes/AprobarEstudiantes";
 import Historial from "./pages/Tutores/Historial";
 import PerfilTutor from "./pages/Tutores/PerfilTutor";
-
+import VerEstudiantes from "./pages/Estudiantes/VerEstudiantes";
 import HistorialSesiones from "./pages/Sesiones/HistorialSesiones";
+import VerTutores from "./pages/Tutores/VerTutores";
+import Reportes from "./pages/Reportes/Reportes";
+
 
 export default function App() {
   return (
@@ -108,7 +112,7 @@ export default function App() {
         />
 
         <Route
-          path="/students"
+          path="/students/approve"
           element={
             <ProtectedRoute role="admin">
               <AprobarEstudiantes />
@@ -117,17 +121,32 @@ export default function App() {
         />
 
         <Route
-          path="/tutors"
+  path="/students"
+  element={
+    <ProtectedRoute role="admin">
+      <VerEstudiantes />
+    </ProtectedRoute>
+  }
+/>
+
+   
+          <Route
+          path="/tutors/approve"
           element={
             <ProtectedRoute role="admin">
-              <Placeholder
-                title="Tutores"
-                description="Gestión y consulta de tutores."
-              />
+              <AprobarTutor />
             </ProtectedRoute>
           }
+          />
+
+
+        <Route
+        path="/tutors" 
+        element={ <ProtectedRoute role="admin"> 
+        <VerTutores /> </ProtectedRoute> } 
         />
 
+        
         <Route
           path="/sessions"
           element={
@@ -141,9 +160,7 @@ export default function App() {
           path="/reports"
           element={
             <ProtectedRoute role="admin">
-              <Placeholder
-                title="Reportes"
-                description="Reportes administrativos del sistema."
+              <Reportes
               />
             </ProtectedRoute>
           }
