@@ -27,7 +27,7 @@ VALUES (
     1
 );
 
-select * from tusuario
+select * from tusuario;
 
 UPDATE tusuario
 SET sn_activo = 1

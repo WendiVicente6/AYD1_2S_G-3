@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 export default function Auth2() {
   const [archivo, setArchivo] = useState(null);
   const [error, setError] = useState("");
@@ -29,7 +32,7 @@ export default function Auth2() {
       setCargando(true);
 
       const response = await fetch(
-        "http://127.0.0.1:5000/api/auth2",
+        `${API_URL}/auth2`,
         {
           method: "POST",
           body: formData,

@@ -1,5 +1,5 @@
-import { CalendarClock, Search } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import TutoresDisponibles from "../Tutores/TutoresDisponibles";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -14,15 +14,7 @@ export default function StudentDashboard() {
         </div>
       </div>
 
-      <article className="empty-page">
-        <div className="empty-icon"><Search size={28} /></div>
-        <h2>Aún no hay tutores para mostrar</h2>
-        <p>Cuando esté lista la búsqueda de tutores, aquí verás tus opciones disponibles.</p>
-        <span>
-          <CalendarClock size={14} style={{ verticalAlign: "middle", marginRight: 4 }} />
-          También podrás ver tus próximas sesiones desde este panel.
-        </span>
-      </article>
+      <TutoresDisponibles />
     </section>
   );
 }

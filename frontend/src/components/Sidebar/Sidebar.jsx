@@ -270,6 +270,12 @@ export default function Sidebar() {
           <Settings size={19} />
           <span>Configuración</span>
         </button>
+        {links.map(({ to, label, icon: Icon }) => (
+          <NavLink key={to} to={to} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+            <Icon size={19} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
       </nav>
 
       <div className="sidebar-footer">

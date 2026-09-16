@@ -58,15 +58,6 @@ export default function App() {
         />
 
         <Route
-          path="/student/tutores"
-          element={
-            <ProtectedRoute role="student">
-              <TutoresDisponibles />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
           path="/student/programar-sesion"
           element={
             <ProtectedRoute role="student">
