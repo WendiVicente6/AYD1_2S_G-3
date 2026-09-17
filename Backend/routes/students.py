@@ -36,17 +36,62 @@ def listar_tutores_disponibles():
     if error:
         return jsonify({"ok": False, "message": error[0]}), error[1]
 
+    id_materia = request.args.get("id_materia", type=int)
+    sexo = request.args.get("sexo", type=str)
+    universidad = request.args.get("universidad", type=str)
+    anios_exp_min = request.args.get("anios_exp_min", type=int)
+    edad_min = request.args.get("edad_min", type=int)
+    edad_max = request.args.get("edad_max", type=int)
+
+    condiciones = []
+    parametros = [id_estudiante, ESTADOS_ACTIVOS]
+
+    if id_materia:
+        condiciones.append(
+            """AND EXISTS (
+                    SELECT 1 FROM ttutor_materia tm2
+                    WHERE tm2.id_tutor = u.id_usuario AND tm2.id_materia = %s
+               )"""
+        )
+        parametros.append(id_materia)
+
+    if sexo:
+        condiciones.append("AND u.genero = %s")
+        parametros.append(sexo.upper())
+
+    if universidad:
+        condiciones.append("AND t.u_graduacion ILIKE %s")
+        parametros.append(f"%{universidad}%")
+
+    if anios_exp_min is not None:
+        condiciones.append("AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, t.anio_inicio_tutoria)) >= %s")
+        parametros.append(anios_exp_min)
+
+    if edad_min is not None:
+        condiciones.append("AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.fec_nac)) >= %s")
+        parametros.append(edad_min)
+
+    if edad_max is not None:
+        condiciones.append("AND EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.fec_nac)) <= %s")
+        parametros.append(edad_max)
+
+    filtros_sql = "\n                      ".join(condiciones)
+
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    """
+                    f"""
                     SELECT
                         u.id_usuario                    AS id_tutor,
                         u.nombres || ' ' || u.apellidos AS nombre_completo,
                         t.dir_tutoria,
                         u.foto,
-                        STRING_AGG(m.nombre, ', ' ORDER BY m.nombre) AS materias
+                        u.genero,
+                        t.u_graduacion,
+                        EXTRACT(YEAR FROM AGE(CURRENT_DATE, t.anio_inicio_tutoria))::int AS anios_experiencia,
+                        EXTRACT(YEAR FROM AGE(CURRENT_DATE, u.fec_nac))::int AS edad,
+                        STRING_AGG(DISTINCT m.nombre, ', ' ORDER BY m.nombre) AS materias
                     FROM tusuario u
                     JOIN ttutor t               ON t.id_usuario = u.id_usuario
                     LEFT JOIN ttutor_materia tm  ON tm.id_tutor  = u.id_usuario
@@ -59,10 +104,12 @@ def listar_tutores_disponibles():
                             WHERE s.id_estudiante = %s
                               AND LOWER(es.txt_desc) = ANY(%s)
                       )
-                    GROUP BY u.id_usuario, u.nombres, u.apellidos, t.dir_tutoria, u.foto
+                      {filtros_sql}
+                    GROUP BY u.id_usuario, u.nombres, u.apellidos, t.dir_tutoria, u.foto,
+                             u.genero, t.u_graduacion, t.anio_inicio_tutoria, u.fec_nac
                     ORDER BY nombre_completo
                     """,
-                    (id_estudiante, ESTADOS_ACTIVOS),
+                    tuple(parametros),
                 )
                 filas = cur.fetchall()
     except Exception as exc:
@@ -77,6 +124,10 @@ def listar_tutores_disponibles():
             "direccion_tutoria": fila["dir_tutoria"],
             "materias": fila["materias"].split(", ") if fila["materias"] else [],
             "foto": foto_data,
+            "genero": fila["genero"],
+            "universidad": fila["u_graduacion"],
+            "anios_experiencia": fila["anios_experiencia"],
+            "edad": fila["edad"],
         })
 
     return jsonify({"ok": True, "tutores": tutores})

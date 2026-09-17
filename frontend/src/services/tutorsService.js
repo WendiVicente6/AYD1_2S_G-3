@@ -5,9 +5,18 @@ function authHeaders() {
   return { Authorization: `Bearer ${getToken()}` };
 }
 
-// HU-006  Tutores disponibles para el estudiante 
-export async function getTutoresDisponibles() {
-  const data = await apiRequest("/estudiante/tutores", { headers: authHeaders() });
+// HU-006  Tutores disponibles para el estudiante
+export async function getTutoresDisponibles(filtros = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filtros).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      params.append(key, value);
+    }
+  });
+  const query = params.toString();
+  const data = await apiRequest(`/estudiante/tutores${query ? `?${query}` : ""}`, {
+    headers: authHeaders(),
+  });
   return data.tutores;
 }
 

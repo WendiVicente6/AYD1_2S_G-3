@@ -182,6 +182,46 @@
   }
 }
 
+.tutor-filtros {
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tutor-filtros-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4c566b;
+}
+
+.tutor-filtros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.tutor-filtros-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4c566b;
+}
+
+.tutor-filtros-grid select,
+.tutor-filtros-grid input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 10px;
+  font-size: 13px;
+}
+
 /* ============================================================
    HU-XXX · Historial de sesiones (tutor)
    ============================================================ */

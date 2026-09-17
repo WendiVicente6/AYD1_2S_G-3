@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { MapPin, BookOpen, CalendarClock } from "lucide-react";
+import { MapPin, BookOpen, CalendarClock, Search } from "lucide-react";
 import { getTutoresDisponibles } from "../../services/tutorsService";
+import { getMaterias } from "../../services/sessionsService";
 import HorarioTutor from "./HorarioTutor";
 
 // Iniciales para la foto  cuando el tutor no tiene fotografía.
@@ -14,18 +15,49 @@ function iniciales(nombreCompleto) {
     .toUpperCase();
 }
 
+const SEXO_OPCIONES = [
+  { value: "", label: "Todos" },
+  { value: "M", label: "Masculino" },
+  { value: "F", label: "Femenino" },
+];
+
 export default function TutoresDisponibles() {
   const [tutores, setTutores] = useState([]);
+  const [materias, setMaterias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [tutorSeleccionado, setTutorSeleccionado] = useState(null);
 
+  const [filtros, setFiltros] = useState({
+    id_materia: "",
+    sexo: "",
+    universidad: "",
+    anios_exp_min: "",
+    edad_min: "",
+    edad_max: "",
+  });
+
   useEffect(() => {
-    getTutoresDisponibles()
-      .then(setTutores)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    getMaterias()
+      .then(setMaterias)
+      .catch(() => setMaterias([]));
   }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setError("");
+    const timeoutId = setTimeout(() => {
+      getTutoresDisponibles(filtros)
+        .then(setTutores)
+        .catch((err) => setError(err.message))
+        .finally(() => setLoading(false));
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [filtros]);
+
+  const handleFiltroChange = (campo) => (e) => {
+    setFiltros((prev) => ({ ...prev, [campo]: e.target.value }));
+  };
 
   return (
     <section>
@@ -33,6 +65,76 @@ export default function TutoresDisponibles() {
         <div>
           <h2>Tutores disponibles</h2>
           <p>Selecciona un tutor para ver sus horarios y su disponibilidad.</p>
+        </div>
+      </div>
+
+      <div className="panel tutor-filtros">
+        <div className="tutor-filtros-titulo">
+          <Search size={16} /> Búsqueda avanzada
+        </div>
+        <div className="tutor-filtros-grid">
+          <label>
+            Materia
+            <select value={filtros.id_materia} onChange={handleFiltroChange("id_materia")}>
+              <option value="">Todas</option>
+              {materias.map((m) => (
+                <option key={m.id_materia} value={m.id_materia}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Sexo
+            <select value={filtros.sexo} onChange={handleFiltroChange("sexo")}>
+              {SEXO_OPCIONES.map((op) => (
+                <option key={op.value} value={op.value}>
+                  {op.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Universidad
+            <input
+              type="text"
+              placeholder="Ej. UES"
+              value={filtros.universidad}
+              onChange={handleFiltroChange("universidad")}
+            />
+          </label>
+
+          <label>
+            Años de experiencia (mín.)
+            <input
+              type="number"
+              min="0"
+              value={filtros.anios_exp_min}
+              onChange={handleFiltroChange("anios_exp_min")}
+            />
+          </label>
+
+          <label>
+            Edad mínima
+            <input
+              type="number"
+              min="0"
+              value={filtros.edad_min}
+              onChange={handleFiltroChange("edad_min")}
+            />
+          </label>
+
+          <label>
+            Edad máxima
+            <input
+              type="number"
+              min="0"
+              value={filtros.edad_max}
+              onChange={handleFiltroChange("edad_max")}
+            />
+          </label>
         </div>
       </div>
 
