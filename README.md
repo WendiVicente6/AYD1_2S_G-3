@@ -14,5 +14,6 @@ EduConnect - Plataforma de Gestión de Tutorias Academicas
 - [Requerimientos funcionales y no funcionales](https://hackmd.io/@Wendi6/Hyc8NK7tGx/edit)
 - [Calificación Scrum Master](https://hackmd.io/@Wendi6/BkLfkFmYGg/edit)
 - [Principios de Jakob Nielsen ](https://hackmd.io/@Wendi6/HkcCEtQtzl/edit)
+- [Prototipos de interfaces ](https://hackmd.io/@Wendi6/HJr7sLstMx/edit)
 
 
