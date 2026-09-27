@@ -147,7 +147,6 @@ def estudiantes_activos():
                         u.direccion,
                         u.telefono,
                         u.fec_nac,
-                        u.foto,
                         u.correo,
                         u.id_estado_usr,
                         e.txt_desc AS estado

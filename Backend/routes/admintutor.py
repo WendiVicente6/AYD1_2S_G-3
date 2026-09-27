@@ -23,7 +23,6 @@ def tutores_pendientes():
                         u.direccion,
                         u.telefono,
                         u.fec_nac,
-                        u.foto,
                         u.correo,
                         u.id_estado_usr,
                         e.txt_desc AS estado
@@ -170,7 +169,6 @@ def tutores_activos():
                         u.direccion,
                         u.telefono,
                         u.fec_nac,
-                        u.foto,
                         u.correo,
                         u.id_estado_usr,
                         e.txt_desc AS estado
