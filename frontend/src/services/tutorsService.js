@@ -96,3 +96,28 @@ export async function deactivateTutor(id_usuario) {
   });
 }
 
+// ==========================================
+// HU-037 y HU-038 — Calificar / Reportar estudiante
+// ==========================================
+
+export async function getTiposReporte() {
+  const data = await apiRequest("/tipos-reporte", { headers: authHeaders() });
+  return data.tipos;
+}
+
+export async function calificarEstudiante(idSesion, { estrellas, comentario }) {
+  return apiRequest(`/tutor/sesiones/${idSesion}/calificar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ estrellas, comentario }),
+  });
+}
+
+export async function reportarEstudiante(idSesion, { id_tipo_reporte, explicacion }) {
+  return apiRequest(`/tutor/sesiones/${idSesion}/reportar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ id_tipo_reporte, explicacion }),
+  });
+}
+
