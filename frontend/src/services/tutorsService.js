@@ -53,3 +53,46 @@ export async function updatePerfilTutor(perfil) {
     body: JSON.stringify(perfil),
   });
 }
+
+// ==========================================
+// ADMIN - APROBAR TUTORES
+// ==========================================
+
+export async function getTutoresPendientes() {
+  const data = await apiRequest("/admin/tutores-pendientes", {
+    headers: authHeaders(),
+  });
+
+  return data.tutores;
+}
+
+export async function aprobarTutor(id_usuario) {
+  return apiRequest(`/admin/tutores/${id_usuario}/aprobar`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
+
+export async function rechazarTutor(id_usuario) {
+  return apiRequest(`/admin/tutores/${id_usuario}/rechazar`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
+
+
+export async function getActiveTutors() {
+  const data = await apiRequest("/admin/tutores", {
+    headers: authHeaders(),
+  });
+
+  return data;
+}
+
+export async function deactivateTutor(id_usuario) {
+  return apiRequest(`/admin/tutores/${id_usuario}/baja`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
+

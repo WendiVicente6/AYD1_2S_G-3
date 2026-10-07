@@ -8,12 +8,18 @@ load_dotenv()
 from routes.auth import auth_bp
 from routes.dashboard import dashboard_bp
 from routes.registration import registration_bp
+from routes.materias import materias_bp
 from routes.schedule import schedule_bp
 from routes.sessions import sessions_bp
 from routes.students import students_bp
 from routes.auth2 import auth2_bp
 from routes.tutor import tutor_sessions_bp
 from routes.adminstudent import admin_bp
+from routes.admintutor import admin_tutor_bp
+from routes.reports import reports_bp
+
+
+
 
 app = Flask(__name__)
 
@@ -89,7 +95,21 @@ app.register_blueprint(
     url_prefix="/api"
 )
 
+app.register_blueprint(
+    reports_bp, 
+    url_prefix="/api"
+)
 
+
+app.register_blueprint(
+    admin_tutor_bp,
+    url_prefix="/api/admin"
+)
+
+
+app.register_blueprint(
+    materias_bp
+)
 # Ruta para comprobar que el backend funciona
 @app.get("/api/health")
 def health():

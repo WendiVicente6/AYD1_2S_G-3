@@ -15,3 +15,11 @@ export async function rejectStudent(id_usuario) {
      method: "PATCH",
    }); 
 }
+
+export async function getActiveStudents() { 
+  return await apiRequest("/admin/estudiantes"); }
+  
+export async function deactivateStudent(id_usuario) { 
+  return await apiRequest(`/admin/estudiantes/${id_usuario}/baja`, { method: "PATCH", }); 
+
+}

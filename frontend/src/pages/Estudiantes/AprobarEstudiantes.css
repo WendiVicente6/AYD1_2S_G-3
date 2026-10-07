@@ -1,90 +1,90 @@
-.estudiantes-table-container {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 20px;
-}
+  .estudiantes-table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 20px;
+  }
 
-.estudiantes-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #ffffff;
-  border-radius: 10px;
-  overflow: hidden;
-}
+  .estudiantes-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+  }
 
-.estudiantes-table th {
-  padding: 14px 16px;
-  text-align: left;
-  font-size: 13px;
-  font-weight: 600;
-  border-bottom: 1px solid #e5e7eb;
-}
+  .estudiantes-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+  }
 
-.estudiantes-table td {
-  padding: 14px 16px;
-  font-size: 14px;
-  border-bottom: 1px solid #e5e7eb;
-  vertical-align: middle;
-}
+  .estudiantes-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: middle;
+  }
 
-.estudiantes-table tbody tr:hover {
-  background-color: #f8fafc;
-}
+  .estudiantes-table tbody tr:hover {
+    background-color: #f8fafc;
+  }
 
-.estudiante-nombre {
-  font-weight: 600;
-}
+  .estudiante-nombre {
+    font-weight: 600;
+  }
 
-.estudiante-correo {
-  color: #64748b;
-}
+  .estudiante-correo {
+    color: #64748b;
+  }
 
-.estudiante-acciones {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
+  .estudiante-acciones {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
 
-.btn-aprobar,
-.btn-rechazar {
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
+  .btn-aprobar,
+  .btn-rechazar {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
 
-.btn-aprobar {
-  background-color: #16a34a;
-  color: white;
-}
+  .btn-aprobar {
+    background-color: #16a34a;
+    color: white;
+  }
 
-.btn-aprobar:hover {
-  background-color: #15803d;
-}
+  .btn-aprobar:hover {
+    background-color: #15803d;
+  }
 
-.btn-rechazar {
-  background-color: #dc2626;
-  color: white;
-}
+  .btn-rechazar {
+    background-color: #dc2626;
+    color: white;
+  }
 
-.btn-rechazar:hover {
-  background-color: #b91c1c;
-}
+  .btn-rechazar:hover {
+    background-color: #b91c1c;
+  }
 
 
-.btn-atras {
-  border: none;
-  border-radius: 6px;
-  padding: 8px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s ease;
-}
+  .btn-atras {
+    border: none;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+  }
 
-.btn-atras {
-  background-color: #e4eae5;
-  color: rgb(58, 54, 54);}
+  .btn-atras {
+    background-color: #e4eae5;
+    color: rgb(58, 54, 54);}

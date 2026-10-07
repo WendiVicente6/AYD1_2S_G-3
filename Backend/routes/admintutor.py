@@ -1,11 +1,15 @@
 from flask import Blueprint, jsonify
 from conexion.db import get_connection
 
-admin_bp = Blueprint("admin", __name__)
+admin_tutor_bp = Blueprint("admin_tutor", __name__)
 
 
-@admin_bp.get("/estudiantes-pendientes")
-def estudiantes_pendientes():
+# ==========================================
+# OBTENER TUTORES PENDIENTES
+# ==========================================
+
+@admin_tutor_bp.get("/tutores-pendientes")
+def tutores_pendientes():
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -25,115 +29,133 @@ def estudiantes_pendientes():
                     FROM tusuario u
                     JOIN testado_usr e
                         ON e.id_estado_usr = u.id_estado_usr
-                    WHERE u.id_rol = 2
+                    WHERE u.id_rol = 3
                       AND u.id_estado_usr = 1
                     ORDER BY u.id_usuario;
                 """)
 
-                estudiantes = cur.fetchall()
+                tutores = cur.fetchall()
 
                 return jsonify({
                     "ok": True,
-                    "estudiantes": estudiantes
-                })
+                    "tutores": tutores
+                }), 200
 
     except Exception as e:
-        print("Error al obtener estudiantes pendientes:", e)
+        print("Error al obtener tutores pendientes:", e)
 
         return jsonify({
             "ok": False,
-            "message": "No fue posible obtener los estudiantes pendientes."
+            "message": "No fue posible obtener los tutores pendientes."
         }), 500
 
 
-@admin_bp.patch("/estudiantes/<int:id_usuario>/aprobar")
-def aprobar_estudiante(id_usuario):
+# ==========================================
+# APROBAR TUTOR
+# ==========================================
+
+@admin_tutor_bp.patch("/tutores/<int:id_usuario>/aprobar")
+def aprobar_tutor(id_usuario):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
+
                 cur.execute("""
                     UPDATE tusuario
-                    SET id_estado_usr = 2,
+                    SET
+                        id_estado_usr = 2,
                         sn_activo = 1
                     WHERE id_usuario = %s
-                      AND id_rol = 2
+                      AND id_rol = 3
                       AND id_estado_usr = 1
                     RETURNING
                         id_usuario,
                         nombres,
                         apellidos,
-                        id_estado_usr;
+                        id_estado_usr,
+                        sn_activo;
                 """, (id_usuario,))
 
-                estudiante = cur.fetchone()
+                tutor = cur.fetchone()
 
-                if not estudiante:
+                if not tutor:
                     return jsonify({
                         "ok": False,
-                        "message": "El estudiante no existe o ya no está pendiente."
+                        "message": "El tutor no existe o ya no está pendiente."
                     }), 404
 
                 conn.commit()
 
                 return jsonify({
                     "ok": True,
-                    "message": "Estudiante aprobado correctamente.",
-                    "estudiante": estudiante
-                })
+                    "message": "Tutor aprobado correctamente.",
+                    "tutor": tutor
+                }), 200
 
     except Exception as e:
-        print("Error al aprobar estudiante:", e)
+        print("Error al aprobar tutor:", e)
 
         return jsonify({
             "ok": False,
-            "message": "No fue posible aprobar al estudiante."
+            "message": "No fue posible aprobar al tutor."
         }), 500
 
 
-@admin_bp.patch("/estudiantes/<int:id_usuario>/rechazar")
-def rechazar_estudiante(id_usuario):
+# ==========================================
+# RECHAZAR TUTOR
+# ==========================================
+
+@admin_tutor_bp.patch("/tutores/<int:id_usuario>/rechazar")
+def rechazar_tutor(id_usuario):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
+
                 cur.execute("""
                     UPDATE tusuario
-                    SET id_estado_usr = 4,
+                    SET
+                        id_estado_usr = 4,
                         sn_activo = 0
                     WHERE id_usuario = %s
-                      AND id_rol = 2
+                      AND id_rol = 3
                       AND id_estado_usr = 1
-                    RETURNING id_usuario, nombres, apellidos, id_estado_usr;
+                    RETURNING
+                        id_usuario,
+                        nombres,
+                        apellidos,
+                        id_estado_usr,
+                        sn_activo;
                 """, (id_usuario,))
 
-                estudiante = cur.fetchone()
+                tutor = cur.fetchone()
 
-                if not estudiante:
+                if not tutor:
                     return jsonify({
                         "ok": False,
-                        "message": "El estudiante no existe o ya no está pendiente."
+                        "message": "El tutor no existe o ya no está pendiente."
                     }), 404
 
                 conn.commit()
 
                 return jsonify({
                     "ok": True,
-                    "message": "Estudiante rechazado correctamente.",
-                    "estudiante": estudiante
-                })
+                    "message": "Tutor rechazado correctamente.",
+                    "tutor": tutor
+                }), 200
 
     except Exception as e:
-        print("Error al rechazar estudiante:", e)
+        print("Error al rechazar tutor:", e)
 
         return jsonify({
             "ok": False,
-            "message": "No fue posible rechazar al estudiante."
+            "message": "No fue posible rechazar al tutor."
         }), 500
 
 
 
 
-@admin_bp.get("/estudiantes")
-def estudiantes_activos():
+@admin_tutor_bp.get("/tutores")
+def tutores_activos():
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -153,39 +175,29 @@ def estudiantes_activos():
                     FROM tusuario u
                     JOIN testado_usr e
                         ON e.id_estado_usr = u.id_estado_usr
-                    WHERE u.id_rol = 2
+                    WHERE u.id_rol = 3
                       AND u.id_estado_usr = 2
                     ORDER BY u.id_usuario;
                 """)
 
-                estudiantes = cur.fetchall()
+                tutores = cur.fetchall()
 
                 return jsonify({
                     "ok": True,
-                    "estudiantes": estudiantes
+                    "tutores": tutores
                 }), 200
 
     except Exception as e:
-        print("Error al obtener estudiantes activos:", e)
+        print("Error al obtener tutores activos:", e)
 
         return jsonify({
             "ok": False,
-            "message": "No fue posible obtener los estudiantes activos."
+            "message": "No fue posible obtener los tutores activos."
         }), 500
 
 
-
-    except Exception as e:
-        print("Error al obtener estudiantes activos:", e)
-
-        return jsonify({
-            "ok": False,
-            "message": "No fue posible obtener los estudiantes activos."
-        }), 500
-
-
-@admin_bp.patch("/estudiantes/<int:id_usuario>/baja")
-def dar_baja_estudiante(id_usuario):
+@admin_tutor_bp.patch("/tutores/<int:id_usuario>/baja")
+def dar_baja_tutor(id_usuario):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
@@ -195,7 +207,7 @@ def dar_baja_estudiante(id_usuario):
                         id_estado_usr = 3,
                         sn_activo = 0
                     WHERE id_usuario = %s
-                      AND id_rol = 2
+                      AND id_rol = 3
                       AND id_estado_usr = 2
                     RETURNING
                         id_usuario,
@@ -205,27 +217,26 @@ def dar_baja_estudiante(id_usuario):
                         sn_activo;
                 """, (id_usuario,))
 
-                estudiante = cur.fetchone()
+                tutor = cur.fetchone()
 
-                if not estudiante:
+                if not tutor:
                     return jsonify({
                         "ok": False,
-                        "message": "El estudiante no existe o no está activo."
+                        "message": "El tutor no existe o no está activo."
                     }), 404
 
                 conn.commit()
 
                 return jsonify({
                     "ok": True,
-                    "message": "Estudiante dado de baja correctamente.",
-                    "estudiante": estudiante
+                    "message": "Tutor dado de baja correctamente.",
+                    "tutor": tutor
                 }), 200
 
     except Exception as e:
-        print("Error al dar de baja al estudiante:", e)
+        print("Error al dar de baja al tutor:", e)
 
         return jsonify({
             "ok": False,
-            "message": "No fue posible dar de baja al estudiante."
+            "message": "No fue posible dar de baja al tutor."
         }), 500
-

@@ -103,6 +103,15 @@ CREATE TABLE tmateria (
     txt_desc VARCHAR(200) NOT NULL
 );
 
+INSERT INTO tmateria (nombre, txt_desc) VALUES
+('Matemática', 'Tutorías de matemática'),
+('Física', 'Tutorías de física'),
+('Química', 'Tutorías de química'),
+('Programación', 'Tutorías de programación'),
+('Bases de Datos', 'Tutorías de bases de datos'),
+('Inglés', 'Tutorías de inglés'),
+('Estadística', 'Tutorías de estadística');
+
 
 -- ============================================
 -- RELACIÓN TUTOR - MATERIA

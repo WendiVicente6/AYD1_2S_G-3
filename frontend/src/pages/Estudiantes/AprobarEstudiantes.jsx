@@ -88,11 +88,13 @@ export default function AprobarEstudiantes() {
       <table className="estudiantes-table">
         <thead>
           <tr>
+            <th>No.</th>
             <th>Nombre</th>
             <th>Carnet</th>
             <th>Género</th>
             <th>Fecha de nacimiento</th>
             <th>Correo</th>
+            <th>Fotografía</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -105,8 +107,11 @@ export default function AprobarEstudiantes() {
               </td>
             </tr>
           ) : (
-            estudiantes.map((estudiante) => (
+            estudiantes.map((estudiante, index) => (
               <tr key={estudiante.id_usuario}>
+                <td>
+                  {index + 1}
+                </td>
                 <td>
                   {estudiante.nombres} {estudiante.apellidos}
                 </td>

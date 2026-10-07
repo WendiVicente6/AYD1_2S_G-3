@@ -326,3 +326,59 @@ form button:disabled{
   .dashboard-content h1{font-size:28px}
   .info-grid{grid-template-columns:1fr}
 }
+
+
+
+/* ==========================================
+   SUBMENÚS DEL SIDEBAR
+   ========================================== */
+
+.sidebar-submenu {
+  width: 100%;
+}
+
+.sidebar-submenu > .nav-button {
+  position: relative;
+}
+
+.submenu-arrow {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.submenu-arrow-open {
+  transform: rotate(180deg);
+}
+
+.submenu-items {
+  margin: 2px 0 7px 0;
+  padding-left: 45px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.submenu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 7px;
+
+  color: #aeb8cc;
+  text-decoration: none;
+
+  font-size: 13px;
+  transition: 0.2s ease;
+}
+
+.submenu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.submenu-item.active {
+  background: rgba(70, 83, 232, 0.25);
+  color: #ffffff;
+  font-weight: 600;
+}
+
