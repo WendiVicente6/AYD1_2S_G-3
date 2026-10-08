@@ -84,3 +84,11 @@ export async function getHistorialSesiones() {
   });
   return data.sesiones;
 }
+
+export async function getPlanEstudio(idSesion) {
+  const token = getToken();
+  const data = await apiRequest(`/sesiones/${idSesion}/plan-estudio`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.plan;
+}
