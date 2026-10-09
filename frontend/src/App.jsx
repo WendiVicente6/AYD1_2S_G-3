@@ -27,6 +27,7 @@ import Historial from "./pages/Tutores/Historial";
 import PerfilTutor from "./pages/Tutores/PerfilTutor";
 import VerEstudiantes from "./pages/Estudiantes/VerEstudiantes";
 import HistorialSesiones from "./pages/Sesiones/HistorialSesiones";
+import PlanEstudio from "./pages/Sesiones/PlanEstudio";
 import VerTutores from "./pages/Tutores/VerTutores";
 import Reportes from "./pages/Reportes/Reportes";
 
@@ -87,6 +88,15 @@ export default function App() {
           element={
             <ProtectedRoute role="student">
               <HistorialSesiones />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/plan-estudio/:idSesion"
+          element={
+            <ProtectedRoute role="student">
+              <PlanEstudio />
             </ProtectedRoute>
           }
         />
