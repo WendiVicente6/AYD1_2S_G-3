@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { getPlanEstudio } from "../../services/sessionsService";
+import { generarPlanPdf } from "../../utils/generarPlanPdf";
 
 const ETIQUETA_TIPO = {
   Texto: { label: "Texto", color: "#374151", bg: "#f3f4f6" },
@@ -20,6 +21,8 @@ export default function PlanEstudio() {
   const [plan, setPlan] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
+  const [errorPdf, setErrorPdf] = useState("");
 
   useEffect(() => {
     getPlanEstudio(idSesion)
@@ -27,6 +30,19 @@ export default function PlanEstudio() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [idSesion]);
+
+  function handleDescargarPdf() {
+    setErrorPdf("");
+    setGenerandoPdf(true);
+    try {
+      generarPlanPdf(plan);
+    } catch (err) {
+      setErrorPdf("No fue posible generar el PDF. Intenta de nuevo.");
+      console.error(err);
+    } finally {
+      setGenerandoPdf(false);
+    }
+  }
 
   return (
     <section>
@@ -38,9 +54,31 @@ export default function PlanEstudio() {
           <h2>Plan de estudio</h2>
           <p>Detalle del plan definido por tu tutor para esta sesión.</p>
         </div>
+
+        {plan && (
+          <button
+            type="button"
+            onClick={handleDescargarPdf}
+            disabled={generandoPdf}
+            style={{
+              border: "1px solid #1e40af",
+              background: generandoPdf ? "#93a9e0" : "#1e40af",
+              color: "#fff",
+              borderRadius: "6px",
+              padding: "9px 16px",
+              fontSize: "13px",
+              fontWeight: 600,
+              cursor: generandoPdf ? "default" : "pointer",
+              alignSelf: "flex-start",
+            }}
+          >
+            {generandoPdf ? "Generando..." : "Descargar PDF"}
+          </button>
+        )}
       </div>
 
       {error && <div className="alert error">{error}</div>}
+      {errorPdf && <div className="alert error">{errorPdf}</div>}
 
       {loading ? (
         <p>Cargando...</p>
