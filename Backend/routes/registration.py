@@ -1,5 +1,6 @@
 import os
 import re
+import base64
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 import psycopg2
@@ -286,6 +287,16 @@ def register_tutor():
     if error:
         return jsonify({"ok": False, "message": error}), 400
 
+    # 1. CAMBIO AQUÍ: Extraemos el PDF y su nombre directamente desde el JSON
+    cv_pdf_base64 = data.get("cv_pdf")
+    nombre_pdf_raw = data.get("cv_pdf_nombre", "curriculum.pdf")
+
+    if not cv_pdf_base64:
+        return jsonify({
+            "ok": False,
+            "message": "Debes adjuntar el PDF de tu curriculum."
+        }), 400
+
     tutor_required = ["nro_id", "dir_tutoria", "anio_inicio_tutoria", "u_graduacion"]
     missing = [f for f in tutor_required if not str(data.get(f, "")).strip()]
     if missing:
@@ -294,6 +305,27 @@ def register_tutor():
             "message": f"Faltan campos obligatorios del tutor: {', '.join(missing)}"
         }), 400
 
+    try:
+        # 2. CAMBIO AQUÍ: Decodificamos el string Base64 para obtener los bytes reales del PDF
+        pdf_bytes = base64.b64decode(cv_pdf_base64)
+    except Exception:
+        return jsonify({
+            "ok": False,
+            "message": "El formato del archivo PDF no es válido."
+        }), 400
+    
+    # 3. CAMBIO AQUÍ: Validamos los bytes decodificados tal como lo hacías antes
+    if (
+        not pdf_bytes
+        or len(pdf_bytes) > 10 * 1024 * 1024
+        or not pdf_bytes.startswith(b"%PDF-")
+    ):
+        return jsonify({
+            "ok": False,
+            "message": "El PDF está vacío, no es válido o supera los 10 MB."
+        }), 400
+    
+    nombre_pdf = os.path.basename(nombre_pdf_raw)[:255]
     try:
         nro_id = int(data["nro_id"])
         datetime.strptime(data["anio_inicio_tutoria"], "%Y-%m-%d")
@@ -369,10 +401,12 @@ def register_tutor():
                 data["direccion"].strip(),        # 6
                 data.get("telefono", "").strip() or None, # 7
                 data["fec_nac"],                  # 8
-                data["foto"].encode("utf-8"),     # 9
+                data["foto"].encode("utf-8"),  
                 data["correo"].strip().lower(),   # 10
                 generate_password_hash(data["password"]), # 11
-                state_id                          # 12
+                state_id                          # 12,
+                
+
             )
         )
         user_id = cur.fetchone()[0]
@@ -381,8 +415,8 @@ def register_tutor():
         cur.execute(
             """
             INSERT INTO ttutor
-                (id_usuario, nro_id, dir_tutoria, anio_inicio_tutoria, u_graduacion)
-            VALUES (%s, %s, %s, %s, %s)
+                (id_usuario, nro_id, dir_tutoria, anio_inicio_tutoria, u_graduacion,cv_pdf,cv_pdf_nombre)
+            VALUES (%s, %s, %s, %s, %s,%s, %s)
             """,
             (
                 user_id,
@@ -390,6 +424,8 @@ def register_tutor():
                 data["dir_tutoria"].strip(),
                 data["anio_inicio_tutoria"],
                 data["u_graduacion"].strip(),
+                pdf_bytes,
+                nombre_pdf, 
             )
         )
         for materia in materias:

@@ -84,8 +84,12 @@ CREATE TABLE ttutor (
     dir_tutoria VARCHAR(150),
 
     anio_inicio_tutoria DATE NOT NULL,
+    
 
     u_graduacion VARCHAR(150) NOT NULL,
+
+    cv_pdf BYTEA,
+    cv_pdf_nombre VARCHAR(255)
 
     CONSTRAINT ttutor_usuario_fk
         FOREIGN KEY (id_usuario)
