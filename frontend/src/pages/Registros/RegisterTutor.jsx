@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Camera, User } from "lucide-react";
+import { Camera, User, FileText } from "lucide-react";
 import { registerTutor } from "../../services/registrationService";
 import { useNavigate } from "react-router-dom";
 import { getMaterias } from "../../services/sessionsService";
@@ -20,9 +20,11 @@ const initialForm = {
   u_graduacion: "",
   foto: "",
   materias: [],
+  cv_pdf: null,
 };
 
 const TIPOS_FOTO_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
+const MAX_PDF = 10 * 1024 * 1024;
 
 function fileToDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -40,6 +42,8 @@ export default function RegisterTutor() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [nombrePdf, setNombrePdf] = useState("");
+
 
   useEffect(() => {
     getMaterias()
@@ -65,6 +69,39 @@ export default function RegisterTutor() {
     setForm((prev) => ({ ...prev, foto: dataUrl }));
   };
 
+  const onPdfChange = (e) => {
+    const file = e.target.files?.[0];
+    setError("");
+
+    if (!file) {
+      setForm((prev) => ({ ...prev, cv_pdf: null }));
+      setNombrePdf("");
+      return;
+    }
+
+    if (
+      file.type !== "application/pdf" ||
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setError("El curriculum debe ser un archivo PDF.");
+      e.target.value = "";
+      setForm((prev) => ({ ...prev, cv_pdf: null }));
+      setNombrePdf("");
+      return;
+    }
+
+    if (file.size > MAX_PDF) {
+      setError("El PDF no debe superar los 10 MB.");
+      e.target.value = "";
+      setForm((prev) => ({ ...prev, cv_pdf: null }));
+      setNombrePdf("");
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, cv_pdf: file }));
+    setNombrePdf(file.name);
+  };
+
   const addMateria = (e) => {
     const idMateria = Number(e.target.value);
     if (!idMateria || form.materias.includes(idMateria)) return;
@@ -88,7 +125,10 @@ export default function RegisterTutor() {
       setError("La fotografía es obligatoria.");
       return;
     }
-
+    if (!form.cv_pdf) {
+      setError("Debes adjuntar el PDF de tu curriculum.");
+      return;
+    }
     if (form.materias.length === 0) {
       setError("Selecciona al menos una materia que impartes.");
       return;
@@ -100,6 +140,9 @@ export default function RegisterTutor() {
       const result = await registerTutor(form);
       setMessage(result.message);
       setForm(initialForm);
+      setNombrePdf("");
+      const pdfInput = document.getElementById("cv-pdf-input");
+      if (pdfInput) pdfInput.value = "";
     } catch (err) {
       setError(err.message);
     } finally {
@@ -152,6 +195,31 @@ export default function RegisterTutor() {
                 onChange={onFotoChange}
                 style={{ display: "none" }}
               />
+            </div>
+          </div>
+          <div style={{ gridColumn: "1/-1" }}>
+            <label htmlFor="cv-pdf-input">
+              Curriculum escaneado (PDF obligatorio)
+            </label>
+
+            <div className="foto-picker">
+              <FileText size={28} />
+
+              <div>
+                <input
+                  id="cv-pdf-input"
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  onChange={onPdfChange}
+                  required
+                />
+
+                <p className="foto-picker-hint">
+                  PDF. Máximo 10 MB. Obligatorio.
+                </p>
+
+                {nombrePdf && <p>{nombrePdf}</p>}
+              </div>
             </div>
           </div>
           <label>Correo electrónico<input name="correo" type="email" value={form.correo} onChange={update} required /></label>
