@@ -43,6 +43,8 @@ CREATE TABLE tusuario (
     fec_nac DATE NOT NULL,
 
     foto BYTEA,
+    carnet_pdf BYTEA,
+    carnet_pdf_nombre VARCHAR(255)
 
     correo VARCHAR(150) NOT NULL,
     password VARCHAR(250),

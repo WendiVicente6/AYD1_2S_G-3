@@ -53,86 +53,230 @@ def get_catalog_id(cur, table, id_column, description):
 
 @registration_bp.post("/students")
 def register_student():
-    data = request.get_json(silent=True) or {}
+    data = request.form
+
     error = validate_common(data)
     if error:
         return jsonify({"ok": False, "message": error}), 400
 
+    foto = request.files.get("foto")
+    carnet_pdf = request.files.get("carnet_pdf")
+
+    if not foto or not foto.filename:
+        return jsonify({
+            "ok": False,
+            "message": "La fotografía del estudiante es obligatoria."
+        }), 400
+
+    if not carnet_pdf or not carnet_pdf.filename:
+        return jsonify({
+            "ok": False,
+            "message": "Debes adjuntar el PDF de tu carnet universitario."
+        }), 400
+
+    # Validar el tipo declarado y el tamaño de la fotografía.
+    tipos_foto = {
+        "image/jpeg": "jpeg",
+        "image/png": "png",
+        "image/webp": "webp",
+    }
+
+    if foto.mimetype not in tipos_foto:
+        return jsonify({
+            "ok": False,
+            "message": "La fotografía debe ser JPG, PNG o WEBP."
+        }), 400
+
+    foto_bytes = foto.read()
+
+    if not foto_bytes or len(foto_bytes) > 5 * 1024 * 1024:
+        return jsonify({
+            "ok": False,
+            "message": "La fotografía está vacía o supera los 5 MB."
+        }), 400
+
+    # Comprobar la firma real de la imagen.
+    es_jpeg = foto_bytes.startswith(b"\xff\xd8\xff")
+    es_png = foto_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    es_webp = (
+        len(foto_bytes) >= 12
+        and foto_bytes[:4] == b"RIFF"
+        and foto_bytes[8:12] == b"WEBP"
+    )
+
+    imagen_valida = (
+        (foto.mimetype == "image/jpeg" and es_jpeg)
+        or (foto.mimetype == "image/png" and es_png)
+        or (foto.mimetype == "image/webp" and es_webp)
+    )
+
+    if not imagen_valida:
+        return jsonify({
+            "ok": False,
+            "message": "El contenido de la fotografía no coincide con su formato."
+        }), 400
+
+    # Validar el PDF.
+    if (
+        carnet_pdf.mimetype != "application/pdf"
+        or not carnet_pdf.filename.lower().endswith(".pdf")
+    ):
+        return jsonify({
+            "ok": False,
+            "message": "El carnet universitario debe ser un archivo PDF."
+        }), 400
+
+    pdf_bytes = carnet_pdf.read()
+
+    if (
+        not pdf_bytes
+        or len(pdf_bytes) > 10 * 1024 * 1024
+        or not pdf_bytes.startswith(b"%PDF-")
+    ):
+        return jsonify({
+            "ok": False,
+            "message": "El PDF está vacío, no es válido o supera los 10 MB."
+        }), 400
+
+    # Limitar el nombre guardado en la base de datos.
+    nombre_pdf = os.path.basename(carnet_pdf.filename)[:255]
+
     conn = None
+
     try:
+        carnet = int(data["carnet"])
+
         conn = get_connection()
         conn.autocommit = False
-        cur = conn.cursor()
 
-        cur.execute(
-            "SELECT 1 FROM tusuario WHERE correo = %s OR carnet = %s LIMIT 1",
-            (data["correo"].strip(), int(data["carnet"]))
-        )
-        if cur.fetchone():
-            return jsonify({
-                "ok": False,
-                "message": "El correo o carnet ya está registrado."
-            }), 409
-
-        role_id = get_catalog_id(cur, "trol", "id_rol", "Usuario")
-        state_id = get_catalog_id(cur, "testado_usr", "id_estado_usr", "Pendiente")
-
-        if role_id is None or state_id is None:
-            return jsonify({
-                "ok": False,
-                "message": "No se encontraron los catálogos Rol=Usuario o Estado=Pendiente."
-            }), 500
-
-        foto = data.get("foto")
-        foto_bytes = foto.encode("utf-8") if foto else None
-
-        cur.execute(
-            """
-            INSERT INTO tusuario
-                (id_rol, nombres, apellidos, carnet, genero, direccion,
-                 telefono, fec_nac, foto, correo, password,
-                 id_estado_usr, sn_activo)
-            VALUES
-                (%s, %s, %s, %s, %s, %s,
-                 %s, %s, %s, %s, %s,
-                 %s, 0)
-            RETURNING id_usuario
-            """,
-            (
-                role_id,
-                data["nombres"].strip(),
-                data["apellidos"].strip(),
-                int(data["carnet"]),
-                data["genero"].strip().upper(),
-                data["direccion"].strip(),
-                data.get("telefono", "").strip() or None,
-                data["fec_nac"],
-                foto_bytes,
-                data["correo"].strip().lower(),
-                generate_password_hash(data["password"]),
-                state_id,
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT 1
+                FROM tusuario
+                WHERE correo = %s OR carnet = %s
+                LIMIT 1
+                """,
+                (data["correo"].strip().lower(), carnet)
             )
-        )
-        user_id = cur.fetchone()[0]
+
+            if cur.fetchone():
+                conn.rollback()
+                return jsonify({
+                    "ok": False,
+                    "message": "El correo o carnet ya está registrado."
+                }), 409
+
+            role_id = get_catalog_id(
+                cur, "trol", "id_rol", "Usuario"
+            )
+            state_id = get_catalog_id(
+                cur, "testado_usr", "id_estado_usr", "Pendiente"
+            )
+
+            if role_id is None or state_id is None:
+                conn.rollback()
+                return jsonify({
+                    "ok": False,
+                    "message": (
+                        "No se encontraron los catálogos "
+                        "Rol=Usuario o Estado=Pendiente."
+                    )
+                }), 500
+
+            cur.execute(
+                """
+                INSERT INTO tusuario (
+                    id_rol,
+                    nombres,
+                    apellidos,
+                    carnet,
+                    genero,
+                    direccion,
+                    telefono,
+                    fec_nac,
+                    foto,
+                    carnet_pdf,
+                    carnet_pdf_nombre,
+                    correo,
+                    password,
+                    id_estado_usr,
+                    sn_activo
+                )
+                VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s, %s, %s, %s, %s, %s, 0
+                )
+                RETURNING id_usuario
+                """,
+                (
+                    role_id,
+                    data["nombres"].strip(),
+                    data["apellidos"].strip(),
+                    carnet,
+                    data["genero"].strip().upper(),
+                    data["direccion"].strip(),
+                    data.get("telefono", "").strip() or None,
+                    data["fec_nac"],
+                    foto_bytes,
+                    pdf_bytes,
+                    nombre_pdf,
+                    data["correo"].strip().lower(),
+                    generate_password_hash(data["password"]),
+                    state_id,
+                )
+            )
+
+            user_id = cur.fetchone()[0]
+
         conn.commit()
 
         return jsonify({
             "ok": True,
-            "message": "Solicitud de registro de estudiante creada correctamente. Queda pendiente de aprobación.",
+            "message": (
+                "Solicitud de registro creada correctamente. "
+                "Queda pendiente de aprobación."
+            ),
             "id_usuario": user_id
         }), 201
+
+    except (ValueError, TypeError):
+        if conn:
+            conn.rollback()
+
+        return jsonify({
+            "ok": False,
+            "message": "El carnet debe ser numérico."
+        }), 400
 
     except psycopg2.errors.UniqueViolation:
         if conn:
             conn.rollback()
-        return jsonify({"ok": False, "message": "El correo o carnet ya está registrado."}), 409
-    except Exception as exc:
+
+        return jsonify({
+            "ok": False,
+            "message": "El correo o carnet ya está registrado."
+        }), 409
+
+    except Exception as e: # <-- Agrega el "as e" aquí
         if conn:
             conn.rollback()
-        return jsonify({"ok": False, "message": f"No fue posible registrar el estudiante: {exc}"}), 500
+
+        # Esto imprimirá el error real con lujos y detalles en tu terminal de Docker
+        import traceback
+        traceback.print_exc() 
+
+        # Esto le mandará el error real a tu frontend para que lo leas en la alerta roja
+        return jsonify({
+            "ok": False,
+            "message": f"Error interno: {str(e)}"
+        }), 500
+
+
     finally:
         if conn:
             conn.close()
+
 
 
 @registration_bp.post("/tutors")
