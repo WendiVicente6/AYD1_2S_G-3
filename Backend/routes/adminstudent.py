@@ -128,3 +128,104 @@ def rechazar_estudiante(id_usuario):
             "ok": False,
             "message": "No fue posible rechazar al estudiante."
         }), 500
+
+
+
+
+@admin_bp.get("/estudiantes")
+def estudiantes_activos():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT
+                        u.id_usuario,
+                        u.nombres,
+                        u.apellidos,
+                        u.carnet,
+                        u.genero,
+                        u.direccion,
+                        u.telefono,
+                        u.fec_nac,
+                        u.correo,
+                        u.id_estado_usr,
+                        e.txt_desc AS estado
+                    FROM tusuario u
+                    JOIN testado_usr e
+                        ON e.id_estado_usr = u.id_estado_usr
+                    WHERE u.id_rol = 2
+                      AND u.id_estado_usr = 2
+                    ORDER BY u.id_usuario;
+                """)
+
+                estudiantes = cur.fetchall()
+
+                return jsonify({
+                    "ok": True,
+                    "estudiantes": estudiantes
+                }), 200
+
+    except Exception as e:
+        print("Error al obtener estudiantes activos:", e)
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible obtener los estudiantes activos."
+        }), 500
+
+
+
+    except Exception as e:
+        print("Error al obtener estudiantes activos:", e)
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible obtener los estudiantes activos."
+        }), 500
+
+
+@admin_bp.patch("/estudiantes/<int:id_usuario>/baja")
+def dar_baja_estudiante(id_usuario):
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE tusuario
+                    SET
+                        id_estado_usr = 3,
+                        sn_activo = 0
+                    WHERE id_usuario = %s
+                      AND id_rol = 2
+                      AND id_estado_usr = 2
+                    RETURNING
+                        id_usuario,
+                        nombres,
+                        apellidos,
+                        id_estado_usr,
+                        sn_activo;
+                """, (id_usuario,))
+
+                estudiante = cur.fetchone()
+
+                if not estudiante:
+                    return jsonify({
+                        "ok": False,
+                        "message": "El estudiante no existe o no está activo."
+                    }), 404
+
+                conn.commit()
+
+                return jsonify({
+                    "ok": True,
+                    "message": "Estudiante dado de baja correctamente.",
+                    "estudiante": estudiante
+                }), 200
+
+    except Exception as e:
+        print("Error al dar de baja al estudiante:", e)
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible dar de baja al estudiante."
+        }), 500
+

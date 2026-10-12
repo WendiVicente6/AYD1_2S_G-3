@@ -43,6 +43,8 @@ CREATE TABLE tusuario (
     fec_nac DATE NOT NULL,
 
     foto BYTEA,
+    carnet_pdf BYTEA,
+    carnet_pdf_nombre VARCHAR(255)
 
     correo VARCHAR(150) NOT NULL,
     password VARCHAR(250),
@@ -82,8 +84,12 @@ CREATE TABLE ttutor (
     dir_tutoria VARCHAR(150),
 
     anio_inicio_tutoria DATE NOT NULL,
+    
 
     u_graduacion VARCHAR(150) NOT NULL,
+
+    cv_pdf BYTEA,
+    cv_pdf_nombre VARCHAR(255)
 
     CONSTRAINT ttutor_usuario_fk
         FOREIGN KEY (id_usuario)
@@ -102,6 +108,15 @@ CREATE TABLE tmateria (
 
     txt_desc VARCHAR(200) NOT NULL
 );
+
+INSERT INTO tmateria (nombre, txt_desc) VALUES
+('Matemática', 'Tutorías de matemática'),
+('Física', 'Tutorías de física'),
+('Química', 'Tutorías de química'),
+('Programación', 'Tutorías de programación'),
+('Bases de Datos', 'Tutorías de bases de datos'),
+('Inglés', 'Tutorías de inglés'),
+('Estadística', 'Tutorías de estadística');
 
 
 -- ============================================

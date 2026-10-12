@@ -623,3 +623,87 @@ def historial_sesiones():
         return jsonify({"ok": True, "sesiones": sesiones})
     except Error:
         return jsonify({"ok": False, "message": "No fue posible consultar el historial."}), 500
+
+
+# HU-032  Ver plan de estudio (estudiante)
+@sessions_bp.get("/sesiones/<int:id_sesion>/plan-estudio")
+def ver_plan_estudio(id_sesion):
+    token = get_bearer_token()
+    if not token:
+        return jsonify({"ok": False, "message": "No autenticado."}), 401
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return jsonify({"ok": False, "message": "Token inválido o expirado."}), 401
+
+    if payload.get("role") != "student":
+        return jsonify({"ok": False, "message": "No tienes permisos para esta acción."}), 403
+
+    id_estudiante = int(payload["sub"])
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                # La sesión debe existir y pertenecer al estudiante autenticado
+                cur.execute(
+                    "SELECT id_estudiante FROM tsesion WHERE id_sesion = %s",
+                    (id_sesion,),
+                )
+                sesion = cur.fetchone()
+
+                if sesion is None:
+                    return jsonify({"ok": False, "message": "La sesión no existe."}), 404
+
+                if sesion["id_estudiante"] != id_estudiante:
+                    return jsonify({"ok": False, "message": "No tienes acceso a esta sesión."}), 403
+
+                # Plan + recursos + datos de la sesión/tutor requeridos por el enunciado
+                cur.execute(
+                    """
+                    SELECT
+                        s.fec_sesion,
+                        tut.nombres AS tutor_nombres,
+                        tut.apellidos AS tutor_apellidos,
+                        t.nro_id AS tutor_nro_id,
+                        mat.nombre AS tutor_especialidad,
+                        p.id_plan, p.dificultades,
+                        r.id_recurso, r.nombre_recurso, r.tipo_recurso, r.descripcion_uso, r.orden
+                    FROM tsesion s
+                    JOIN tusuario tut ON tut.id_usuario = s.id_tutor
+                    JOIN ttutor t ON t.id_usuario = s.id_tutor
+                    JOIN tmateria mat ON mat.id_materia = s.id_materia
+                    LEFT JOIN tplan_estudio p ON p.id_sesion = s.id_sesion
+                    LEFT JOIN trecurso_plan r ON r.id_plan = p.id_plan
+                    WHERE s.id_sesion = %s
+                    ORDER BY r.orden
+                    """,
+                    (id_sesion,),
+                )
+                filas = cur.fetchall()
+
+        if not filas or filas[0]["id_plan"] is None:
+            return jsonify({"ok": True, "plan": None})
+
+        primera = filas[0]
+        plan = {
+            "id_plan": primera["id_plan"],
+            "fecha_ultima_sesion": primera["fec_sesion"].strftime("%Y-%m-%d"),
+            "tutor_nombre": f"{primera['tutor_nombres']} {primera['tutor_apellidos']}",
+            "tutor_especialidad": primera["tutor_especialidad"],
+            "tutor_nro_id": primera["tutor_nro_id"],
+            "dificultades": primera["dificultades"],
+            "recursos": [],
+        }
+        for fila in filas:
+            if fila["id_recurso"] is not None:
+                plan["recursos"].append({
+                    "id_recurso": fila["id_recurso"],
+                    "nombre_recurso": fila["nombre_recurso"],
+                    "tipo_recurso": fila["tipo_recurso"],
+                    "descripcion_uso": fila["descripcion_uso"],
+                    "orden": fila["orden"],
+                })
+
+        return jsonify({"ok": True, "plan": plan})
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible consultar el plan de estudio."}), 500

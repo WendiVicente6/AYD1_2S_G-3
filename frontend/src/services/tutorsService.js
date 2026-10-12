@@ -53,3 +53,71 @@ export async function updatePerfilTutor(perfil) {
     body: JSON.stringify(perfil),
   });
 }
+
+// ==========================================
+// ADMIN - APROBAR TUTORES
+// ==========================================
+
+export async function getTutoresPendientes() {
+  const data = await apiRequest("/admin/tutores-pendientes", {
+    headers: authHeaders(),
+  });
+
+  return data.tutores;
+}
+
+export async function aprobarTutor(id_usuario) {
+  return apiRequest(`/admin/tutores/${id_usuario}/aprobar`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
+
+export async function rechazarTutor(id_usuario) {
+  return apiRequest(`/admin/tutores/${id_usuario}/rechazar`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
+
+
+export async function getActiveTutors() {
+  const data = await apiRequest("/admin/tutores", {
+    headers: authHeaders(),
+  });
+
+  return data;
+}
+
+export async function deactivateTutor(id_usuario) {
+  return apiRequest(`/admin/tutores/${id_usuario}/baja`, {
+    method: "PATCH",
+    headers: authHeaders(),
+  });
+}
+
+// ==========================================
+// HU-037 y HU-038 — Calificar / Reportar estudiante
+// ==========================================
+
+export async function getTiposReporte() {
+  const data = await apiRequest("/tipos-reporte", { headers: authHeaders() });
+  return data.tipos;
+}
+
+export async function calificarEstudiante(idSesion, { estrellas, comentario }) {
+  return apiRequest(`/tutor/sesiones/${idSesion}/calificar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ estrellas, comentario }),
+  });
+}
+
+export async function reportarEstudiante(idSesion, { id_tipo_reporte, explicacion }) {
+  return apiRequest(`/tutor/sesiones/${idSesion}/reportar`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ id_tipo_reporte, explicacion }),
+  });
+}
+

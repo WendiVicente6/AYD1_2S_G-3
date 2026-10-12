@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { getHistorialSesiones } from "../../services/sessionsService";
 
 const ESTADO_CLASE = {
@@ -49,6 +50,7 @@ export default function HistorialSesiones() {
                 <th style={{ textAlign: "left", padding: "8px" }}>Motivo</th>
                 <th style={{ textAlign: "left", padding: "8px" }}>Resumen</th>
                 <th style={{ textAlign: "left", padding: "8px" }}>Estado</th>
+                <th style={{ textAlign: "left", padding: "8px" }}>Plan de estudio</th>
               </tr>
             </thead>
             <tbody>
@@ -64,6 +66,9 @@ export default function HistorialSesiones() {
                     <span className={`status ${ESTADO_CLASE[s.estado] || ""}`}>
                       {s.estado}
                     </span>
+                  </td>
+                  <td style={{ padding: "8px" }}>
+                    <Link to={`/student/plan-estudio/${s.id_sesion}`}>Ver plan</Link>
                   </td>
                 </tr>
               ))}
