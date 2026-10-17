@@ -1,7 +1,59 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Response
 from conexion.db import get_connection
 
 admin_bp = Blueprint("admin", __name__)
+
+
+@admin_bp.get("/estudiantes/<int:id_usuario>/carnet-pdf")
+def obtener_carnet_pdf(id_usuario):
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT carnet_pdf, carnet_pdf_nombre
+                    FROM tusuario
+                    WHERE id_usuario = %s
+                      AND id_rol = 2
+                      AND id_estado_usr = 1;
+                """, (id_usuario,))
+
+                documento = cur.fetchone()
+
+                if not documento or not documento["carnet_pdf"]:
+                    return jsonify({
+                        "ok": False,
+                        "message": "No se encontró el PDF de la solicitud."
+                    }), 404
+
+                pdf_bytes = bytes(documento["carnet_pdf"])
+                nombre_pdf = (
+                    documento["carnet_pdf_nombre"] or "carnet.pdf"
+                )
+                nombre_pdf = (
+                    nombre_pdf
+                    .replace('"', "")
+                    .replace("\r", "")
+                    .replace("\n", "")
+                )
+
+                return Response(
+                    pdf_bytes,
+                    mimetype="application/pdf",
+                    headers={
+                        "Content-Disposition": (
+                            f'inline; filename="{nombre_pdf}"'
+                        ),
+                        "X-Content-Type-Options": "nosniff"
+                    }
+                )
+
+    except Exception as e:
+        print("Error al obtener el PDF del estudiante:", e)
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible obtener el PDF."
+        }), 500
 
 
 @admin_bp.get("/estudiantes-pendientes")
@@ -173,15 +225,6 @@ def estudiantes_activos():
             "message": "No fue posible obtener los estudiantes activos."
         }), 500
 
-
-
-    except Exception as e:
-        print("Error al obtener estudiantes activos:", e)
-
-        return jsonify({
-            "ok": False,
-            "message": "No fue posible obtener los estudiantes activos."
-        }), 500
 
 
 @admin_bp.patch("/estudiantes/<int:id_usuario>/baja")
