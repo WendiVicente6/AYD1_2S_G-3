@@ -162,7 +162,7 @@ export default function Sidebar() {
     tutores: false,
   });
 
-  const role = user?.role;
+   const role = user?.role;
   const links = LINKS_BY_ROLE[role] || [];
   const roleLabel = ROLE_LABELS[role] || "Usuario";
 
