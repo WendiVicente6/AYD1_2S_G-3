@@ -44,6 +44,7 @@ def get_tutor_sessions_history():
                         ON tu.id_usuario = ts.id_estudiante
                     LEFT JOIN tcalificacion tc
                         ON tc.id_sesion = ts.id_sesion
+                       AND tc.autor = 'tutor'
                     WHERE ts.id_tutor = %s
                     ORDER BY ts.fec_sesion DESC, ts.hora_inicio DESC
                     """,
@@ -431,7 +432,10 @@ def calificar_estudiante(id_sesion):
                 if not es_valida:
                     return error_response
 
-                cur.execute("SELECT 1 FROM tcalificacion WHERE id_sesion = %s", (id_sesion,))
+                cur.execute(
+                    "SELECT 1 FROM tcalificacion WHERE id_sesion = %s AND autor = 'tutor'",
+                    (id_sesion,),
+                )
                 if cur.fetchone():
                     return jsonify({"ok": False, "message": "Esta sesión ya fue calificada."}), 409
 
