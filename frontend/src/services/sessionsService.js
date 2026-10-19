@@ -85,6 +85,16 @@ export async function getHistorialSesiones() {
   return data.sesiones;
 }
 
+// HU-034: el estudiante califica la atención del tutor
+export async function calificarTutor(idSesion, { estrellas, comentario }) {
+  const token = getToken();
+  return apiRequest(`/sesiones/${idSesion}/calificar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ estrellas, comentario }),
+  });
+}
+
 export async function getPlanEstudio(idSesion) {
   const token = getToken();
   const data = await apiRequest(`/sesiones/${idSesion}/plan-estudio`, {
