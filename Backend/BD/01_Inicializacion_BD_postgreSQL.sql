@@ -44,7 +44,7 @@ CREATE TABLE tusuario (
 
     foto BYTEA,
     carnet_pdf BYTEA,
-    carnet_pdf_nombre VARCHAR(255)
+    carnet_pdf_nombre VARCHAR(255),
 
     correo VARCHAR(150) NOT NULL,
     password VARCHAR(250),
@@ -89,7 +89,7 @@ CREATE TABLE ttutor (
     u_graduacion VARCHAR(150) NOT NULL,
 
     cv_pdf BYTEA,
-    cv_pdf_nombre VARCHAR(255)
+    cv_pdf_nombre VARCHAR(255),
 
     CONSTRAINT ttutor_usuario_fk
         FOREIGN KEY (id_usuario)

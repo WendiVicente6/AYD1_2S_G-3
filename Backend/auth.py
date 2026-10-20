@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime, timedelta, timezone
 import jwt
 from flask import current_app, request
@@ -70,3 +71,28 @@ def password_is_valid(password, stored_password):
 
 def hash_password(password):
     return generate_password_hash(password)
+
+
+def foto_a_data_uri(foto_bytes):
+    if not foto_bytes:
+        return None
+
+    crudo = bytes(foto_bytes)
+
+    try:
+        texto = crudo.decode("utf-8")
+        if texto.startswith("data:"):
+            return texto
+    except UnicodeDecodeError:
+        pass
+
+    if crudo.startswith(b"\x89PNG\r\n\x1a\n"):
+        mime = "image/png"
+    elif crudo.startswith(b"\xff\xd8\xff"):
+        mime = "image/jpeg"
+    elif crudo[:4] == b"RIFF" and crudo[8:12] == b"WEBP":
+        mime = "image/webp"
+    else:
+        mime = "application/octet-stream"
+
+    return f"data:{mime};base64,{base64.b64encode(crudo).decode('ascii')}"

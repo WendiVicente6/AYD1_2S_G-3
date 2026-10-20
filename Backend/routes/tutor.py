@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from psycopg import Error
 from werkzeug.security import generate_password_hash
 from conexion.db import get_connection
-from auth import decode_token, get_bearer_token
+from auth import decode_token, get_bearer_token, foto_a_data_uri
 
 tutor_sessions_bp = Blueprint("tutors", __name__)
 
@@ -172,7 +172,7 @@ def get_tutor_perfil():
                 )
                 materias = cur.fetchall()
 
-        foto = bytes(row["foto"]).decode("utf-8") if row["foto"] else None
+        foto = foto_a_data_uri(row["foto"])
 
         perfil = {
             "nombres": row["nombres"],
@@ -206,7 +206,7 @@ def update_tutor_perfil():
     if error_response:
         return error_response
 
-    body = request.get_json(silent=True) or {}
+    body = request.form
 
     required = [
         "nombres", "apellidos", "carnet", "genero", "direccion", "fec_nac",
@@ -228,9 +228,7 @@ def update_tutor_perfil():
     except (TypeError, ValueError):
         return jsonify({"ok": False, "message": "Alguna de las fechas no es válida."}), 400
 
-    materias = body.get("materias", [])
-    if not isinstance(materias, list):
-        return jsonify({"ok": False, "message": "materias debe ser una lista."}), 400
+    materias = request.form.getlist("materias")
 
     password = (body.get("password") or "").strip()
     if password and not PASSWORD_RE.match(password):
@@ -239,7 +237,31 @@ def update_tutor_perfil():
             "message": "La contraseña debe tener mínimo 8 caracteres, una minúscula, una mayúscula y un número."
         }), 400
 
-    foto_data_uri = (body.get("foto") or "").strip() or None
+    foto = request.files.get("foto")
+    foto_bytes = None
+    if foto and foto.filename:
+        tipos_foto = {"image/jpeg": "jpeg", "image/png": "png", "image/webp": "webp"}
+        if foto.mimetype not in tipos_foto:
+            return jsonify({"ok": False, "message": "La fotografía debe ser JPG, PNG o WEBP."}), 400
+
+        foto_bytes = foto.read()
+        if not foto_bytes or len(foto_bytes) > 5 * 1024 * 1024:
+            return jsonify({"ok": False, "message": "La fotografía está vacía o supera los 5 MB."}), 400
+
+        es_jpeg = foto_bytes.startswith(b"\xff\xd8\xff")
+        es_png = foto_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+        es_webp = (
+            len(foto_bytes) >= 12
+            and foto_bytes[:4] == b"RIFF"
+            and foto_bytes[8:12] == b"WEBP"
+        )
+        imagen_valida = (
+            (foto.mimetype == "image/jpeg" and es_jpeg)
+            or (foto.mimetype == "image/png" and es_png)
+            or (foto.mimetype == "image/webp" and es_webp)
+        )
+        if not imagen_valida:
+            return jsonify({"ok": False, "message": "El contenido de la fotografía no coincide con su formato."}), 400
 
     try:
         with get_connection() as conn:
@@ -249,7 +271,7 @@ def update_tutor_perfil():
                 if actual is None:
                     return jsonify({"ok": False, "message": "Tutor no encontrado."}), 404
 
-                if not foto_data_uri and not actual["foto"]:
+                if not foto_bytes and not actual["foto"]:
                     return jsonify({"ok": False, "message": "La fotografía es obligatoria."}), 400
 
                 cur.execute(
@@ -276,7 +298,7 @@ def update_tutor_perfil():
                     body["fec_nac"],
                 ]
 
-                if foto_data_uri:
+                if foto_bytes:
                     cur.execute(
                         """
                         UPDATE tusuario
@@ -284,7 +306,7 @@ def update_tutor_perfil():
                             direccion = %s, telefono = %s, fec_nac = %s, foto = %s
                         WHERE id_usuario = %s
                         """,
-                        (*datos_usuario, foto_data_uri.encode("utf-8"), id_tutor),
+                        (*datos_usuario, foto_bytes, id_tutor),
                     )
                 else:
                     cur.execute(

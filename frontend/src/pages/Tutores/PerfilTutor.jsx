@@ -23,20 +23,12 @@ const initialForm = {
 
 const TIPOS_FOTO_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
 
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 export default function PerfilTutor() {
   const { refreshUser } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [fotoActual, setFotoActual] = useState(null);
   const [fotoNueva, setFotoNueva] = useState(null);
+  const [fotoNuevaPreview, setFotoNuevaPreview] = useState("");
   const [materiasCatalogo, setMateriasCatalogo] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -44,37 +36,49 @@ export default function PerfilTutor() {
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  useEffect(() => {
-    async function cargar() {
-      try {
-        const [perfil, materias] = await Promise.all([getPerfilTutor(), getMaterias()]);
-        setForm({
-          nombres: perfil.nombres || "",
-          apellidos: perfil.apellidos || "",
-          carnet: perfil.carnet ?? "",
-          genero: perfil.genero || "",
-          direccion: perfil.direccion || "",
-          telefono: perfil.telefono || "",
-          fec_nac: perfil.fec_nac || "",
-          correo: perfil.correo || "",
-          nro_id: perfil.nro_id ?? "",
-          dir_tutoria: perfil.dir_tutoria || "",
-          anio_inicio_tutoria: perfil.anio_inicio_tutoria || "",
-          u_graduacion: perfil.u_graduacion || "",
-          password: "",
-          materias: perfil.materias.map((m) => m.id_materia),
-        });
-        setFotoActual(perfil.foto);
-        setMateriasCatalogo(materias);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+  async function cargar() {
+    try {
+      const perfil = await getPerfilTutor();
+      setForm({
+        nombres: perfil.nombres || "",
+        apellidos: perfil.apellidos || "",
+        carnet: perfil.carnet ?? "",
+        genero: perfil.genero || "",
+        direccion: perfil.direccion || "",
+        telefono: perfil.telefono || "",
+        fec_nac: perfil.fec_nac || "",
+        correo: perfil.correo || "",
+        nro_id: perfil.nro_id ?? "",
+        dir_tutoria: perfil.dir_tutoria || "",
+        anio_inicio_tutoria: perfil.anio_inicio_tutoria || "",
+        u_graduacion: perfil.u_graduacion || "",
+        password: "",
+        materias: perfil.materias.map((m) => m.id_materia),
+      });
+      setFotoActual(perfil.foto);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
+    getMaterias().then(setMateriasCatalogo).catch(() => {});
     cargar();
   }, []);
+
+  useEffect(() => {
+    if (!fotoNueva) {
+      setFotoNuevaPreview("");
+      return;
+    }
+
+    const url = URL.createObjectURL(fotoNueva);
+    setFotoNuevaPreview(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [fotoNueva]);
 
   const update = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -87,7 +91,7 @@ export default function PerfilTutor() {
     }));
   };
 
-  const onFotoChange = async (e) => {
+  const onFotoChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -98,8 +102,7 @@ export default function PerfilTutor() {
     }
 
     setError("");
-    const dataUrl = await fileToDataUrl(file);
-    setFotoNueva(dataUrl);
+    setFotoNueva(file);
   };
 
   const submit = async (e) => {
@@ -121,12 +124,9 @@ export default function PerfilTutor() {
 
       const result = await updatePerfilTutor(payload);
       setMensaje(result.message);
-      if (fotoNueva) {
-        setFotoActual(fotoNueva);
-        setFotoNueva(null);
-      }
+      setFotoNueva(null);
       setForm((prev) => ({ ...prev, password: "" }));
-      await refreshUser();
+      await Promise.all([cargar(), refreshUser()]);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -138,7 +138,7 @@ export default function PerfilTutor() {
     return <section className="page-container"><p>Cargando perfil...</p></section>;
   }
 
-  const fotoPreview = fotoNueva || fotoActual;
+  const fotoPreview = fotoNuevaPreview || fotoActual;
 
   return (
     <section>

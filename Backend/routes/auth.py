@@ -9,7 +9,8 @@ from auth import (
     password_is_valid,
     hash_password,
     decode_token,
-    get_bearer_token
+    get_bearer_token,
+    foto_a_data_uri,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -37,7 +38,7 @@ def public_user(row):
         "direccion": row["direccion"],
         "fec_nac": row["fec_nac"].isoformat() if row["fec_nac"] else None,
         "genero": row["genero"],
-        "foto": bytes(row["foto"]).decode("utf-8") if row["foto"] else None,
+        "foto": foto_a_data_uri(row["foto"]),
         "id_rol": row["id_rol"],
         "rol": row["rol"],
         "role": normalize_role(row["rol"]),
