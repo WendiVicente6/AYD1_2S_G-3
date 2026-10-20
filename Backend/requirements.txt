@@ -11,4 +11,5 @@ psycopg[binary]
 psycopg2-binary
 PyJWT
 python-dotenv
+pytest
 #recharts
