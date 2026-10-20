@@ -7,7 +7,7 @@ const ETIQUETA_TIPO = {
   Texto: { label: "Texto", color: "#374151", bg: "#f3f4f6" },
   Video: { label: "Video", color: "#7c2d12", bg: "#ffedd5" },
   PDF: { label: "PDF", color: "#991b1b", bg: "#fee2e2" },
-  Enlace: { label: "Enlace", color: "#1e40af", bg: "#dbeafe" },
+  Ejercicio: { label: "Ejercicio", color: "#065f46", bg: "#d1fae5" },
 };
 
 function formatearFecha(fecha) {

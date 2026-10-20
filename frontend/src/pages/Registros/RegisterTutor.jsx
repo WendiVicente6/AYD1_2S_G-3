@@ -18,22 +18,14 @@ const initialForm = {
   dir_tutoria: "",
   anio_inicio_tutoria: "",
   u_graduacion: "",
-  foto: "",
+  foto: null,
   materias: [],
   cv_pdf: null,
 };
 
 const TIPOS_FOTO_PERMITIDOS = ["image/png", "image/jpeg", "image/webp"];
+const MAX_FOTO = 5 * 1024 * 1024;
 const MAX_PDF = 10 * 1024 * 1024;
-
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function RegisterTutor() {
   const navigate = useNavigate();
@@ -42,8 +34,8 @@ export default function RegisterTutor() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fotoPreview, setFotoPreview] = useState("");
   const [nombrePdf, setNombrePdf] = useState("");
-
 
   useEffect(() => {
     getMaterias()
@@ -51,22 +43,45 @@ export default function RegisterTutor() {
       .catch(() => setError("No fue posible cargar el catálogo de materias."));
   }, []);
 
+  useEffect(() => {
+    if (!form.foto) {
+      setFotoPreview("");
+      return;
+    }
+
+    const url = URL.createObjectURL(form.foto);
+    setFotoPreview(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [form.foto]);
+
   const update = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const onFotoChange = async (e) => {
+  const onFotoChange = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    setError("");
+
+    if (!file) {
+      setForm((prev) => ({ ...prev, foto: null }));
+      return;
+    }
 
     if (!TIPOS_FOTO_PERMITIDOS.includes(file.type)) {
       setError("La fotografía debe ser un archivo JPG, PNG o WEBP.");
       e.target.value = "";
+      setForm((prev) => ({ ...prev, foto: null }));
       return;
     }
 
-    setError("");
-    const dataUrl = await fileToDataUrl(file);
-    setForm((prev) => ({ ...prev, foto: dataUrl }));
+    if (file.size > MAX_FOTO) {
+      setError("La fotografía no debe superar los 5 MB.");
+      e.target.value = "";
+      setForm((prev) => ({ ...prev, foto: null }));
+      return;
+    }
+
+    setForm((prev) => ({ ...prev, foto: file }));
   };
 
   const onPdfChange = (e) => {
@@ -141,7 +156,9 @@ export default function RegisterTutor() {
       setMessage(result.message);
       setForm(initialForm);
       setNombrePdf("");
+      const fotoInput = document.getElementById("foto-registro-input");
       const pdfInput = document.getElementById("cv-pdf-input");
+      if (fotoInput) fotoInput.value = "";
       if (pdfInput) pdfInput.value = "";
     } catch (err) {
       setError(err.message);
@@ -176,17 +193,17 @@ export default function RegisterTutor() {
           <label>Fecha de nacimiento<input name="fec_nac" type="date" value={form.fec_nac} onChange={update} required /></label>
           <div style={{ gridColumn: "1/-1" }}>
             <div className="foto-picker">
-              {form.foto ? (
-                <img src={form.foto} alt="Vista previa" className="foto-avatar" />
+              {fotoPreview ? (
+                <img src={fotoPreview} alt="Vista previa" className="foto-avatar" />
               ) : (
                 <div className="foto-avatar-placeholder"><User size={32} /></div>
               )}
               <div>
                 <label htmlFor="foto-registro-input" className="foto-picker-btn">
                   <Camera size={16} />
-                  {form.foto ? "Cambiar foto" : "Subir foto"}
+                  {fotoPreview ? "Cambiar foto" : "Subir foto"}
                 </label>
-                <p className="foto-picker-hint">JPG, PNG o WEBP</p>
+                <p className="foto-picker-hint">JPG, PNG o WEBP. Máximo 5 MB.</p>
               </div>
               <input
                 id="foto-registro-input"

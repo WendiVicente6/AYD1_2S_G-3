@@ -296,6 +296,10 @@ def get_pending_sessions():
     except Error:
         return jsonify({"ok": False, "message": "No fue posible consultar las sesiones pendientes."}), 500
 
+TIPOS_RECURSO_VALIDOS = ("Texto", "Video", "PDF", "Ejercicio")
+
+
+# HU-036: Registrar plan de estudio estructurado al atender estudiante (actualiza HU-023)
 @sessions_bp.put("/tutors/sessions/<int:id_sesion>/attend")
 def attend_session(id_sesion):
     token = get_bearer_token()
@@ -312,10 +316,34 @@ def attend_session(id_sesion):
     id_tutor = int(payload["sub"])
 
     body = request.get_json(silent=True) or {}
-    resumen = (body.get("resumen") or "").strip()
+    dificultades = (body.get("dificultades") or "").strip()
+    recursos = body.get("recursos") or []
 
-    if not resumen:
-        return jsonify({"ok": False, "message": "El resumen de la sesión es obligatorio."}), 400
+    if not dificultades:
+        return jsonify({"ok": False, "message": "Las dificultades identificadas son obligatorias."}), 400
+
+    if not isinstance(recursos, list):
+        return jsonify({"ok": False, "message": "recursos debe ser una lista."}), 400
+
+    recursos_limpios = []
+    for recurso in recursos:
+        nombre_recurso = str((recurso or {}).get("nombre") or "").strip()
+        tipo_recurso = str((recurso or {}).get("tipo") or "").strip()
+        descripcion_uso = str((recurso or {}).get("descripcion") or "").strip()
+
+        if not nombre_recurso or not tipo_recurso or not descripcion_uso:
+            return jsonify({
+                "ok": False,
+                "message": "Cada recurso recomendado debe tener nombre, tipo y descripción de uso."
+            }), 400
+
+        if tipo_recurso not in TIPOS_RECURSO_VALIDOS:
+            return jsonify({
+                "ok": False,
+                "message": f"Tipo de recurso inválido: '{tipo_recurso}'. Debe ser uno de {', '.join(TIPOS_RECURSO_VALIDOS)}."
+            }), 400
+
+        recursos_limpios.append((nombre_recurso, tipo_recurso, descripcion_uso))
 
     try:
         with get_connection() as conn:
@@ -344,12 +372,26 @@ def attend_session(id_sesion):
                 cur.execute(
                     """
                     UPDATE tsesion
-                    SET resumen = %s,
-                        id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Completada')
+                    SET id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Completada')
                     WHERE id_sesion = %s
                     """,
-                    (resumen, id_sesion),
+                    (id_sesion,),
                 )
+
+                cur.execute(
+                    "INSERT INTO tplan_estudio (id_sesion, dificultades) VALUES (%s, %s) RETURNING id_plan",
+                    (id_sesion, dificultades),
+                )
+                id_plan = cur.fetchone()["id_plan"]
+
+                for orden, (nombre_recurso, tipo_recurso, descripcion_uso) in enumerate(recursos_limpios, start=1):
+                    cur.execute(
+                        """
+                        INSERT INTO trecurso_plan (id_plan, nombre_recurso, tipo_recurso, descripcion_uso, orden)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (id_plan, nombre_recurso, tipo_recurso, descripcion_uso, orden),
+                    )
             conn.commit()
 
         return jsonify({"ok": True, "message": "Sesión marcada como atendida correctamente."})

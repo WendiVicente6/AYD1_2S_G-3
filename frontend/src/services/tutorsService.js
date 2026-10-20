@@ -46,12 +46,35 @@
     return data.perfil;
   }
 
+  // Envía texto y la foto (si se cambió) usando FormData, igual que el registro.
   export async function updatePerfilTutor(perfil) {
-    return apiRequest("/tutor/perfil", {
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+    const formData = new FormData();
+
+    Object.entries(perfil).forEach(([key, value]) => {
+      if (key === "materias") return;
+      if (value !== null && value !== undefined && value !== "") {
+        formData.append(key, value);
+      }
+    });
+
+    (perfil.materias || []).forEach((idMateria) => {
+      formData.append("materias", idMateria);
+    });
+
+    const response = await fetch(`${API_URL}/tutor/perfil`, {
       method: "PUT",
       headers: authHeaders(),
-      body: JSON.stringify(perfil),
+      body: formData,
     });
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(result.message || "No fue posible actualizar el perfil.");
+    }
+
+    return result;
   }
 
   // ==========================================

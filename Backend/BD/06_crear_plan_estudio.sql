@@ -27,5 +27,5 @@ CREATE TABLE IF NOT EXISTS trecurso_plan (
     descripcion_uso VARCHAR(255) NOT NULL,
     orden INTEGER,
     CONSTRAINT recurso_plan_plan_fk FOREIGN KEY (id_plan) REFERENCES tplan_estudio (id_plan),
-    CONSTRAINT recurso_tipo_ck CHECK (tipo_recurso IN ('Texto', 'Video', 'PDF', 'Enlace'))
+    CONSTRAINT recurso_tipo_ck CHECK (tipo_recurso IN ('Texto', 'Video', 'PDF', 'Ejercicio'))
 );

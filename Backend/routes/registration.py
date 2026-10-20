@@ -1,6 +1,5 @@
 import os
 import re
-import base64
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 import psycopg2
@@ -282,20 +281,11 @@ def register_student():
 
 @registration_bp.post("/tutors")
 def register_tutor():
-    data = request.get_json(silent=True) or {}
+    data = request.form
+
     error = validate_common(data)
     if error:
         return jsonify({"ok": False, "message": error}), 400
-
-    # 1. CAMBIO AQUÍ: Extraemos el PDF y su nombre directamente desde el JSON
-    cv_pdf_base64 = data.get("cv_pdf")
-    nombre_pdf_raw = data.get("cv_pdf_nombre", "curriculum.pdf")
-
-    if not cv_pdf_base64:
-        return jsonify({
-            "ok": False,
-            "message": "Debes adjuntar el PDF de tu curriculum."
-        }), 400
 
     tutor_required = ["nro_id", "dir_tutoria", "anio_inicio_tutoria", "u_graduacion"]
     missing = [f for f in tutor_required if not str(data.get(f, "")).strip()]
@@ -305,16 +295,73 @@ def register_tutor():
             "message": f"Faltan campos obligatorios del tutor: {', '.join(missing)}"
         }), 400
 
-    try:
-        # 2. CAMBIO AQUÍ: Decodificamos el string Base64 para obtener los bytes reales del PDF
-        pdf_bytes = base64.b64decode(cv_pdf_base64)
-    except Exception:
+    foto = request.files.get("foto")
+    cv_pdf = request.files.get("cv_pdf")
+
+    if not foto or not foto.filename:
         return jsonify({
             "ok": False,
-            "message": "El formato del archivo PDF no es válido."
+            "message": "La fotografía del tutor es obligatoria."
         }), 400
-    
-    # 3. CAMBIO AQUÍ: Validamos los bytes decodificados tal como lo hacías antes
+
+    if not cv_pdf or not cv_pdf.filename:
+        return jsonify({
+            "ok": False,
+            "message": "Debes adjuntar el PDF de tu curriculum."
+        }), 400
+
+    # Validar el tipo declarado y el tamaño de la fotografía (mismo criterio que estudiante).
+    tipos_foto = {
+        "image/jpeg": "jpeg",
+        "image/png": "png",
+        "image/webp": "webp",
+    }
+
+    if foto.mimetype not in tipos_foto:
+        return jsonify({
+            "ok": False,
+            "message": "La fotografía debe ser JPG, PNG o WEBP."
+        }), 400
+
+    foto_bytes = foto.read()
+
+    if not foto_bytes or len(foto_bytes) > 5 * 1024 * 1024:
+        return jsonify({
+            "ok": False,
+            "message": "La fotografía está vacía o supera los 5 MB."
+        }), 400
+
+    es_jpeg = foto_bytes.startswith(b"\xff\xd8\xff")
+    es_png = foto_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+    es_webp = (
+        len(foto_bytes) >= 12
+        and foto_bytes[:4] == b"RIFF"
+        and foto_bytes[8:12] == b"WEBP"
+    )
+
+    imagen_valida = (
+        (foto.mimetype == "image/jpeg" and es_jpeg)
+        or (foto.mimetype == "image/png" and es_png)
+        or (foto.mimetype == "image/webp" and es_webp)
+    )
+
+    if not imagen_valida:
+        return jsonify({
+            "ok": False,
+            "message": "El contenido de la fotografía no coincide con su formato."
+        }), 400
+
+    if (
+        cv_pdf.mimetype != "application/pdf"
+        or not cv_pdf.filename.lower().endswith(".pdf")
+    ):
+        return jsonify({
+            "ok": False,
+            "message": "El curriculum debe ser un archivo PDF."
+        }), 400
+
+    pdf_bytes = cv_pdf.read()
+
     if (
         not pdf_bytes
         or len(pdf_bytes) > 10 * 1024 * 1024
@@ -324,8 +371,9 @@ def register_tutor():
             "ok": False,
             "message": "El PDF está vacío, no es válido o supera los 10 MB."
         }), 400
-    
-    nombre_pdf = os.path.basename(nombre_pdf_raw)[:255]
+
+    nombre_pdf = os.path.basename(cv_pdf.filename)[:255]
+
     try:
         nro_id = int(data["nro_id"])
         datetime.strptime(data["anio_inicio_tutoria"], "%Y-%m-%d")
@@ -335,21 +383,22 @@ def register_tutor():
             "message": "El número de identificación debe ser numérico y la fecha de inicio válida."
         }), 400
 
-    materias = data.get("materias", [])
-    if not isinstance(materias, list):
-        return jsonify({"ok": False, "message": "materias debe ser una lista."}), 400
+    materias = request.form.getlist("materias")
 
     conn = None
     try:
+        carnet = int(data["carnet"])
+
         conn = get_connection()
         conn.autocommit = False
         cur = conn.cursor()
 
         cur.execute(
             "SELECT 1 FROM tusuario WHERE correo = %s OR carnet = %s LIMIT 1",
-            (data["correo"].strip(), int(data["carnet"]))
+            (data["correo"].strip().lower(), carnet)
         )
         if cur.fetchone():
+            conn.rollback()
             return jsonify({
                 "ok": False,
                 "message": "El correo o carnet ya está registrado."
@@ -360,6 +409,7 @@ def register_tutor():
             (nro_id,)
         )
         if cur.fetchone():
+            conn.rollback()
             return jsonify({
                 "ok": False,
                 "message": "El número de identificación del tutor ya está registrado."
@@ -369,16 +419,11 @@ def register_tutor():
         state_id = get_catalog_id(cur, "testado_usr", "id_estado_usr", "Pendiente")
 
         if role_id is None or state_id is None:
+            conn.rollback()
             return jsonify({
                 "ok": False,
                 "message": "No se encontraron los catálogos Rol=Tutor o Estado=Pendiente."
             }), 500
-
-        if not data.get("foto"):
-            return jsonify({
-                "ok": False,
-                "message": "La fotografía del tutor es obligatoria."
-            }), 400
 
         cur.execute(
             """
@@ -393,30 +438,27 @@ def register_tutor():
             RETURNING id_usuario
             """,
             (
-                role_id,                          # 1
-                data["nombres"].strip(),          # 2
-                data["apellidos"].strip(),        # 3
-                int(data["carnet"]),              # 4
-                data["genero"].strip().upper(),   # 5
-                data["direccion"].strip(),        # 6
-                data.get("telefono", "").strip() or None, # 7
-                data["fec_nac"],                  # 8
-                data["foto"].encode("utf-8"),  
-                data["correo"].strip().lower(),   # 10
-                generate_password_hash(data["password"]), # 11
-                state_id                          # 12,
-                
-
+                role_id,
+                data["nombres"].strip(),
+                data["apellidos"].strip(),
+                carnet,
+                data["genero"].strip().upper(),
+                data["direccion"].strip(),
+                data.get("telefono", "").strip() or None,
+                data["fec_nac"],
+                foto_bytes,
+                data["correo"].strip().lower(),
+                generate_password_hash(data["password"]),
+                state_id,
             )
         )
         user_id = cur.fetchone()[0]
 
-        # Si ttutor tiene id_usuario como Primary Key, esto está bien:
         cur.execute(
             """
             INSERT INTO ttutor
-                (id_usuario, nro_id, dir_tutoria, anio_inicio_tutoria, u_graduacion,cv_pdf,cv_pdf_nombre)
-            VALUES (%s, %s, %s, %s, %s,%s, %s)
+                (id_usuario, nro_id, dir_tutoria, anio_inicio_tutoria, u_graduacion, cv_pdf, cv_pdf_nombre)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """,
             (
                 user_id,
@@ -425,7 +467,7 @@ def register_tutor():
                 data["anio_inicio_tutoria"],
                 data["u_graduacion"].strip(),
                 pdf_bytes,
-                nombre_pdf, 
+                nombre_pdf,
             )
         )
         for materia in materias:
@@ -446,6 +488,10 @@ def register_tutor():
             "id_usuario": user_id
         }), 201
 
+    except (ValueError, TypeError):
+        if conn:
+            conn.rollback()
+        return jsonify({"ok": False, "message": "El carnet debe ser numérico."}), 400
     except psycopg2.errors.UniqueViolation:
         if conn:
             conn.rollback()
