@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
-import { getHistorialSesiones, calificarTutor } from "../../services/sessionsService";
+import {
+  getHistorialSesiones,
+  calificarTutor,
+  getTiposReporteTutor,
+  reportarTutor,
+} from "../../services/sessionsService";
 
 const ESTADO_CLASE = {
   "Atendida": "success",
@@ -109,29 +114,132 @@ function CalificarTutorModal({ sesion, onClose, onSuccess }) {
   );
 }
 
+// HU-035: reportar al tutor (categoría predefinida + explicación obligatoria)
+function ReportarTutorModal({ sesion, onClose, onSuccess }) {
+  const [tipos, setTipos] = useState([]);
+  const [idTipoReporte, setIdTipoReporte] = useState("");
+  const [explicacion, setExplicacion] = useState("");
+  const [error, setError] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const [cargandoTipos, setCargandoTipos] = useState(true);
+
+  useEffect(() => {
+    getTiposReporteTutor()
+      .then(setTipos)
+      .catch((err) => setError(err.message))
+      .finally(() => setCargandoTipos(false));
+  }, []);
+
+  async function confirmar(e) {
+    e.preventDefault();
+    setError("");
+
+    if (!idTipoReporte) {
+      setError("Selecciona una categoría de reporte.");
+      return;
+    }
+    if (!explicacion.trim()) {
+      setError("La explicación del reporte es obligatoria.");
+      return;
+    }
+
+    setGuardando(true);
+    try {
+      const result = await reportarTutor(sesion.id_sesion, {
+        id_tipo_reporte: Number(idTipoReporte),
+        explicacion: explicacion.trim(),
+      });
+      onSuccess(result.message);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <h2 style={{ marginTop: 0 }}>Reportar a {sesion.tutor}</h2>
+      <p>{sesion.fecha} · {sesion.materia}</p>
+      <p style={{ fontSize: "13px", color: "#6b7280" }}>
+        El reporte se enviará al administrador, quien decidirá qué acción tomar.
+      </p>
+
+      {error && <div className="alert error">{error}</div>}
+
+      <form onSubmit={confirmar} className="registration-form" style={{ gridTemplateColumns: "1fr" }}>
+        <label>
+          Categoría del reporte
+          <select
+            value={idTipoReporte}
+            onChange={(e) => setIdTipoReporte(e.target.value)}
+            disabled={cargandoTipos}
+            required
+          >
+            <option value="">{cargandoTipos ? "Cargando..." : "Selecciona una categoría"}</option>
+            {tipos.map((t) => (
+              <option key={t.id_tipo_reporte} value={t.id_tipo_reporte}>{t.txt_desc}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Explicación
+          <textarea
+            rows={4}
+            maxLength={500}
+            value={explicacion}
+            onChange={(e) => setExplicacion(e.target.value)}
+            placeholder="Describe lo ocurrido con el mayor detalle posible..."
+            style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
+            required
+          />
+        </label>
+
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button type="button" onClick={onClose} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
+            Cancelar
+          </button>
+          <button type="submit" disabled={guardando}>
+            {guardando ? "Enviando..." : "Confirmar reporte"}
+          </button>
+        </div>
+      </form>
+    </ModalOverlay>
+  );
+}
+
 export default function HistorialSesiones() {
   const [sesiones, setSesiones] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [mensajeGlobal, setMensajeGlobal] = useState("");
   const [modalCalificar, setModalCalificar] = useState(null); // sesión seleccionada o null
+  const [modalReportar, setModalReportar] = useState(null);
 
-  useEffect(() => {
-    cargar();
-  }, []);
-
-  function cargar() {
-    setLoading(true);
-    getHistorialSesiones()
+  function pedirHistorial() {
+    return getHistorialSesiones()
       .then(setSesiones)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }
 
+  // Carga inicial (loading ya empieza en true)
+  useEffect(() => {
+    pedirHistorial();
+  }, []);
+
+  // Recarga después de calificar o reportar
+  function cargar() {
+    setLoading(true);
+    pedirHistorial();
+  }
+
   function manejarExito(mensaje) {
     setMensajeGlobal(mensaje);
     setModalCalificar(null);
-    cargar(); // refresca para que no se pueda volver a calificar la misma sesión
+    setModalReportar(null);
+    cargar(); // refresca para que no se pueda volver a calificar/reportar la misma sesión
   }
 
   return (
@@ -166,7 +274,7 @@ export default function HistorialSesiones() {
                 <th style={{ textAlign: "left", padding: "8px" }}>Resumen</th>
                 <th style={{ textAlign: "left", padding: "8px" }}>Estado</th>
                 <th style={{ textAlign: "left", padding: "8px" }}>Plan de estudio</th>
-                <th style={{ textAlign: "left", padding: "8px" }}>Calificación</th>
+                <th style={{ textAlign: "left", padding: "8px" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -189,15 +297,26 @@ export default function HistorialSesiones() {
                   <td style={{ padding: "8px" }}>
                     {s.estado !== "Atendida" ? (
                       "—"
-                    ) : s.ya_calificada ? (
-                      <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "13px", color: "#6b7280" }}>
-                        <Star size={14} fill="#f5a623" color="#f5a623" />
-                        {s.calificacion_estrellas}
-                      </span>
                     ) : (
-                      <button className="text-button" onClick={() => setModalCalificar(s)}>
-                        Calificar
-                      </button>
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        {s.ya_calificada ? (
+                          <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "13px", color: "#6b7280" }}>
+                            <Star size={14} fill="#f5a623" color="#f5a623" />
+                            {s.calificacion_estrellas}
+                          </span>
+                        ) : (
+                          <button className="text-button" onClick={() => setModalCalificar(s)}>
+                            Calificar
+                          </button>
+                        )}
+                        {s.ya_reportada ? (
+                          <span style={{ fontSize: "13px", color: "#6b7280" }}>Reportado</span>
+                        ) : (
+                          <button className="text-button" onClick={() => setModalReportar(s)}>
+                            Reportar
+                          </button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -211,6 +330,14 @@ export default function HistorialSesiones() {
         <CalificarTutorModal
           sesion={modalCalificar}
           onClose={() => setModalCalificar(null)}
+          onSuccess={manejarExito}
+        />
+      )}
+
+      {modalReportar && (
+        <ReportarTutorModal
+          sesion={modalReportar}
+          onClose={() => setModalReportar(null)}
           onSuccess={manejarExito}
         />
       )}
