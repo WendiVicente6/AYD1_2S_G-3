@@ -44,6 +44,7 @@ def get_tutor_sessions_history():
                         ON tu.id_usuario = ts.id_estudiante
                     LEFT JOIN tcalificacion tc
                         ON tc.id_sesion = ts.id_sesion
+                       AND tc.autor = 'tutor'
                     WHERE ts.id_tutor = %s
                     ORDER BY ts.fec_sesion DESC, ts.hora_inicio DESC
                     """,
@@ -390,9 +391,23 @@ def update_tutor_perfil():
 
 @tutor_sessions_bp.get("/tipos-reporte")
 def get_tipos_reporte():
+    # HU-035: ?dirigido_a=tutor devuelve las categorías para reportar tutores.
+    # Sin parámetro se mantienen las de HU-038 (contra estudiantes).
+    dirigido_a = request.args.get("dirigido_a", "estudiante")
+    if dirigido_a not in ("tutor", "estudiante"):
+        return jsonify({"ok": False, "message": "El parámetro dirigido_a debe ser 'tutor' o 'estudiante'."}), 400
+
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT id_tipo_reporte, txt_desc FROM ttipo_reporte ORDER BY id_tipo_reporte")
+            cur.execute(
+                """
+                SELECT id_tipo_reporte, txt_desc
+                FROM ttipo_reporte
+                WHERE dirigido_a = %s
+                ORDER BY id_tipo_reporte
+                """,
+                (dirigido_a,),
+            )
             tipos = cur.fetchall()
     return jsonify({"ok": True, "tipos": tipos})
 
@@ -453,7 +468,10 @@ def calificar_estudiante(id_sesion):
                 if not es_valida:
                     return error_response
 
-                cur.execute("SELECT 1 FROM tcalificacion WHERE id_sesion = %s", (id_sesion,))
+                cur.execute(
+                    "SELECT 1 FROM tcalificacion WHERE id_sesion = %s AND autor = 'tutor'",
+                    (id_sesion,),
+                )
                 if cur.fetchone():
                     return jsonify({"ok": False, "message": "Esta sesión ya fue calificada."}), 409
 
@@ -494,7 +512,10 @@ def reportar_estudiante(id_sesion):
                 if not es_valida:
                     return error_response
 
-                cur.execute("SELECT 1 FROM ttipo_reporte WHERE id_tipo_reporte = %s", (id_tipo_reporte,))
+                cur.execute(
+                    "SELECT 1 FROM ttipo_reporte WHERE id_tipo_reporte = %s AND dirigido_a = 'estudiante'",
+                    (id_tipo_reporte,),
+                )
                 if not cur.fetchone():
                     return jsonify({"ok": False, "message": "Categoría de reporte inválida."}), 400
 

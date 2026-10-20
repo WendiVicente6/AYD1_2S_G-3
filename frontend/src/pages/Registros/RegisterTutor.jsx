@@ -126,7 +126,7 @@ export default function RegisterTutor() {
 
   const removeMateria = (id) =>
     setForm((prev) => ({ ...prev, materias: prev.materias.filter((m) => m !== id) }));
-
+  
   const materiasDisponibles = materiasCatalogo.filter(
     (m) => !form.materias.includes(m.id_materia)
   );
