@@ -92,7 +92,7 @@ export async function registerTutor(data) {
     anio_inicio_tutoria: data.anio_inicio_tutoria,
     u_graduacion: data.u_graduacion,
     
-    // MANTIENE TU LÓGICA: Pasa la lista original sin alteraciones de formato
+    // MANTIENE TU LÓGICA: Pasa la lista original sin alteraciones de formatoo
     materias: data.materias || [], 
 
     // Mapeamos el PDF transformado en texto plano junto a su metadato

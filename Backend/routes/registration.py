@@ -436,11 +436,10 @@ def register_tutor():
                     VALUES (%s, %s)
                     ON CONFLICT DO NOTHING
                     """,
-                    (user_id, int(materia)) # <-- OJO: Verifica si aquí va user_id o el id generado en ttutor
+                    (user_id, int(materia)) 
                 )
 
         conn.commit()
-
         return jsonify({
             "ok": True,
             "message": "Solicitud de registro de tutor creada correctamente. Queda pendiente de aprobación.",
