@@ -156,7 +156,7 @@ export default function AprobarTutor() {
                 <th>Fecha de nacimiento</th>
                 <th>Correo</th>
                 <th>CV</th>
-                <th>Acciones</th>
+                <th>Acciones</th>/
               </tr>
             </thead>
 

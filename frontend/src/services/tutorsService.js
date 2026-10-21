@@ -96,6 +96,15 @@
     });
   }
 
+  // ADMIN - Actualizar datos de un tutor activo
+export async function updateTutor(id_usuario, tutor) {
+  return apiRequest(`/admin/tutores/${id_usuario}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(tutor),
+  });
+}
+
   // ==========================================
   // HU-037 y HU-038 — Calificar / Reportar estudiante
   // ==========================================
