@@ -29,7 +29,7 @@ export default function TutoresDisponibles() {
 
   return (
     <section>
-      <div className="page-heading">
+      <div data-testid="panel-tutores" className="page-heading">
         <div>
           <h2>Tutores disponibles</h2>
           <p>Selecciona un tutor para ver sus horarios y su disponibilidad.</p>
