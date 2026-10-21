@@ -206,6 +206,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                data-testid={`menu-${item.label.toLowerCase().replaceAll(" ", "-")}`}
                 className={({ isActive }) =>
                   `nav-item ${isActive ? "active" : ""}`
                 }
@@ -251,6 +252,8 @@ export default function Sidebar() {
                     <NavLink
                       key={child.to}
                       to={child.to}
+                      data-testid={`menu-${item.label.toLowerCase().replaceAll(" ", "-")}`}
+
                       className={({ isActive }) =>
                         `submenu-item ${isActive ? "active" : ""}`
                       }
@@ -292,6 +295,7 @@ export default function Sidebar() {
         </div>
 
         <button
+          data-testid="logout"
           className="logout-button"
           id="logout-button"
           name="logout-button"

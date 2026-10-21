@@ -87,6 +87,7 @@ export default function Login() {
             <Mail size={18} />
 
             <input
+              data-testid="email"
               type="email"
               value={correo}
               onChange={(e) => setCorreo(e.target.value)}
@@ -101,6 +102,7 @@ export default function Login() {
             <LockKeyhole size={18} />
 
             <input
+              data-testid="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -110,6 +112,7 @@ export default function Login() {
           </div>
 
           <button
+            data-testid="login-submit"
             type="submit"
             disabled={loading}
           >
