@@ -188,7 +188,7 @@ def rechazar_tutor(id_usuario):
             "ok": False,
             "message": "No fue posible rechazar al tutor."
         }), 500
-
+    
 
 @admin_tutor_bp.get("/tutores")
 def tutores_activos():
@@ -232,6 +232,119 @@ def tutores_activos():
         return jsonify({
             "ok": False,
             "message": "No fue posible obtener los tutores activos."
+        }), 500
+
+
+
+@admin_tutor_bp.put("/tutores/<int:id_usuario>")
+def actualizar_tutor(id_usuario):
+    try:
+        from flask import request
+
+        datos = request.get_json(silent=True)
+
+        if not isinstance(datos, dict):
+            return jsonify({
+                "ok": False,
+                "message": "Los datos enviados no son válidos."
+            }), 400
+
+        campos = [
+            "nombres",
+            "apellidos",
+            "carnet",
+            "genero",
+            "direccion",
+            "telefono",
+            "fec_nac",
+            "correo",
+        ]
+
+        # Validar que se hayan enviado todos los campos requeridos.
+        faltantes = [
+            campo for campo in campos
+            if campo not in datos
+            or datos[campo] is None
+            or not str(datos[campo]).strip()
+        ]
+
+        if faltantes:
+            return jsonify({
+                "ok": False,
+                "message": (
+                    "Todos los campos son obligatorios. "
+                    "Revise: " + ", ".join(faltantes)
+                )
+            }), 400
+
+        valores = {
+            campo: str(datos[campo]).strip()
+            for campo in campos
+        }
+
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE tusuario
+                    SET
+                        nombres = %s,
+                        apellidos = %s,
+                        carnet = %s,
+                        genero = %s,
+                        direccion = %s,
+                        telefono = %s,
+                        fec_nac = %s::date,
+                        correo = %s
+                    WHERE id_usuario = %s
+                      AND id_rol = 3
+                      AND id_estado_usr = 2
+                    RETURNING
+                        id_usuario,
+                        nombres,
+                        apellidos,
+                        carnet,
+                        genero,
+                        direccion,
+                        telefono,
+                        fec_nac,
+                        correo,
+                        id_estado_usr;
+                """, (
+                    valores["nombres"],
+                    valores["apellidos"],
+                    valores["carnet"],
+                    valores["genero"],
+                    valores["direccion"],
+                    valores["telefono"],
+                    valores["fec_nac"],
+                    valores["correo"],
+                    id_usuario,
+                ))
+
+                tutor = cur.fetchone()
+
+                if not tutor:
+                    return jsonify({
+                        "ok": False,
+                        "message": (
+                            "El tutor no existe o no está activo."
+                        )
+                    }), 404
+
+                conn.commit()
+
+                return jsonify({
+                    "ok": True,
+                    "message": "Tutor actualizado correctamente.",
+                    "tutor": tutor,
+                }), 200
+
+    except Exception as e:
+        print("Error al actualizar tutor:", repr(e))
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible actualizar los datos del tutor."
         }), 500
 
 

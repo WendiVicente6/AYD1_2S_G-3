@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, Response
+from flask import Blueprint, jsonify, Response, request
 from conexion.db import get_connection
 
 admin_bp = Blueprint("admin", __name__)
@@ -272,3 +272,123 @@ def dar_baja_estudiante(id_usuario):
             "message": "No fue posible dar de baja al estudiante."
         }), 500
 
+
+
+@admin_bp.put("/estudiantes/<int:id_usuario>")
+def actualizar_estudiante(id_usuario):
+    try:
+        datos = request.get_json(silent=True)
+
+        if not isinstance(datos, dict):
+            return jsonify({
+                "ok": False,
+                "message": "Debe enviar los datos del estudiante."
+            }), 400
+
+        campos = [
+            "nombres",
+            "apellidos",
+            "carnet",
+            "genero",
+            "direccion",
+            "telefono",
+            "fec_nac",
+            "correo"
+        ]
+
+        faltantes = [
+            campo for campo in campos
+            if campo not in datos
+        ]
+
+        if faltantes:
+            return jsonify({
+                "ok": False,
+                "message": "Faltan campos obligatorios.",
+                "campos": faltantes
+            }), 400
+
+        valores = {
+            campo: datos[campo]
+            for campo in campos
+        }
+
+        for campo in campos:
+            valor = valores[campo]
+
+            if valor is None or (
+                isinstance(valor, str) and not valor.strip()
+            ):
+                return jsonify({
+                    "ok": False,
+                    "message": "El campo {campo} es obligatorio."
+                }), 400
+
+            if isinstance(valor, str):
+                valores[campo] = valor.strip()
+
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE tusuario
+                    SET
+                        nombres = %s,
+                        apellidos = %s,
+                        carnet = %s,
+                        genero = %s,
+                        direccion = %s,
+                        telefono = %s,
+                        fec_nac = %s::date,
+                        correo = %s
+                   WHERE id_usuario = %s
+                      AND id_rol = 2
+                      AND id_estado_usr = 2
+                    RETURNING
+                        id_usuario,
+                        nombres,
+                        apellidos,
+                        carnet,
+                        genero,
+                        direccion,
+                        telefono,
+                        fec_nac,
+                        correo,
+                        id_estado_usr;
+                """, (
+                    valores["nombres"],
+                    valores["apellidos"],
+                    valores["carnet"],
+                    valores["genero"],
+                    valores["direccion"],
+                    valores["telefono"],
+                    valores["fec_nac"],
+                    valores["correo"],
+                    id_usuario
+                ))
+
+                estudiante = cur.fetchone()
+
+                if not estudiante:
+                    return jsonify({
+                        "ok": False,
+                        "message": (
+                            "El estudiante no existe "
+                            "o no está activo."
+                        )
+                    }), 404
+
+                conn.commit()
+
+                return jsonify({
+                    "ok": True,
+                    "message": "Estudiante actualizado correctamente.",
+                    "estudiante": estudiante
+                }), 200
+
+    except Exception as e:
+        print("Error al actualizar estudiante:", e)
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible actualizar al estudiante."
+        }), 500

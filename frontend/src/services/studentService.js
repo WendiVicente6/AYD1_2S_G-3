@@ -47,3 +47,16 @@ export async function getStudentCarnetPdf(id_usuario) {
 
   return await response.blob();
 }
+
+
+export async function updateStudent(id_usuario, estudiante) {
+  return await apiRequest(`/admin/estudiantes/${id_usuario}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(estudiante),
+  });
+}
+
+
