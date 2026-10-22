@@ -292,7 +292,7 @@ export default function HistorialSesiones() {
                     </span>
                   </td>
                   <td style={{ padding: "8px" }}>
-                    <Link to={`/student/plan-estudio/${s.id_sesion}`}>Ver plan</Link>
+                    <Link to={`/student/plan-estudio/${s.id_sesion}`} data-testid="ver-plan">Ver plan</Link>
                   </td>
                   <td style={{ padding: "8px" }}>
                     {s.estado !== "Atendida" ? (

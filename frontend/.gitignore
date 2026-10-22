@@ -23,3 +23,8 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Cypress (resultados locales de las pruebas E2E)
+cypress/downloads/
+cypress/videos/
+cypress/screenshots/
