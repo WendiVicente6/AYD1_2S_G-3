@@ -45,6 +45,11 @@ const LINKS_BY_ROLE = {
         to: "/students/calificacion",
         label: "Calificación de estudiantes",
         },
+        
+        {
+        to: "/admin/reportes-estudiantes",
+        label: "Reportes de estudiantes",
+        },
       ],
     },
 
@@ -64,6 +69,10 @@ const LINKS_BY_ROLE = {
         {
         to: "/tutors/calificacion",
         label: "Calificación de tutores",
+      },
+      {
+        to: "/admin/reportes-tutores",
+        label: "Reportes de tutores",
       },
       ],
     },
