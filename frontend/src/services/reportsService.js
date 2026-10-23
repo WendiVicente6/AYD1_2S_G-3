@@ -40,3 +40,13 @@ export async function getReporteAsistenciaCancelacionMaterias() {
     "/admin/reportes/asistencia-cancelacion-materias"
   );
 }
+
+ // Reporte: Calificación de tutores
+export async function getReporteCalificacionTutores() {
+  return await apiRequest("/admin/reportes/calificacion-tutores");
+}
+
+// Reporte: Calificación de estudiantes
+export async function getReporteCalificacionEstudiantes() {
+  return await apiRequest("/admin/reportes/calificacion-estudiantes");
+}

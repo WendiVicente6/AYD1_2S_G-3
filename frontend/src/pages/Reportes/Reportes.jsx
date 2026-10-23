@@ -9,6 +9,8 @@ import {
   getReporteHorariosDemandados,
   getReporteEstudiantesSesiones,
   getReporteAsistenciaCancelacionMaterias,
+  getReporteCalificacionTutores,
+  getReporteCalificacionEstudiantes,
 } from "../../services/reportsService";
 
 import "./Reportes.css";
@@ -20,21 +22,52 @@ const ESTADOS = [
   { clave: "canceladas", nombre: "Canceladas" },
 ];
 
-function Reportes() {
+function Reportes({ tipoInicial = null }) {
   const [tutores, setTutores] = useState([]);
   const [materias, setMaterias] = useState([]);
   const [topTutores, setTopTutores] = useState([]);
   const [evolucion, setEvolucion] = useState([]);
-  const [tipoReporte, setTipoReporte] = useState("tutores");
+  const [tipoReporte, setTipoReporte] = useState(tipoInicial || "tutores");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cancelacionesMaterias, setCancelacionesMaterias] = useState([]);
   const [horarios, setHorarios] = useState([]);
   const [estudiantesSesiones, setEstudiantesSesiones] = useState([]);
   const [asistenciaCancelacion, setAsistenciaCancelacion] = useState([]);
+  const [calificacionTutores, setCalificacionTutores] = useState([]);
+  const [calificacionEstudiantes, setCalificacionEstudiantes] = useState([]);
+
+  const cargarCalificaciones = async (tipo) => {
+  try {
+    setLoading(true);
+    setError("");
+
+    if (tipo === "calificacion-tutores") {
+      const respuesta = await getReporteCalificacionTutores();
+      setCalificacionTutores(respuesta.tutores || []);
+    } else if (tipo === "calificacion-estudiantes") {
+      const respuesta = await getReporteCalificacionEstudiantes();
+      setCalificacionEstudiantes(respuesta.estudiantes || []);
+    }
+  } catch (err) {
+    console.error("Error al cargar calificaciones:", err);
+    setError("No fue posible cargar las calificaciones.");
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
+      if (
+    tipoInicial === "calificacion-tutores" ||
+    tipoInicial === "calificacion-estudiantes"
+  ) {
+    setTipoReporte(tipoInicial);
+    cargarCalificaciones(tipoInicial);
+  } else {
+    setTipoReporte("tutores");
     cargarReportes();
-  }, []);
+  }
+  }, [tipoInicial]);
 
   const cargarReportes = async () => {
     try {
@@ -86,9 +119,16 @@ function Reportes() {
     return (
       <div className="reportes-container">
         <p role="alert">{error}</p>
-        <button type="button" onClick={cargarReportes}>
-          Reintentar
-        </button>
+        <button
+        type="button"
+        onClick={() =>
+          tipoInicial
+            ? cargarCalificaciones(tipoInicial)
+            : cargarReportes()
+        }
+      >
+        Reintentar
+      </button>
       </div>
     );
   }
@@ -101,7 +141,7 @@ function Reportes() {
   return (
     <div className="reportes-container">
       <h1>Reportes</h1>
-
+      {!tipoInicial && (
       <div className="reporte-selector">
         <label htmlFor="tipoReporte">Tipo de reporte</label>
 
@@ -120,6 +160,7 @@ function Reportes() {
           <option value="asistenciaCancelacion">Sesiones completadas frente a canceladas por materia</option>
         </select>
       </div>
+      )}
 
       {/* REPORTE 1: TUTORES */}
       {tipoReporte === "tutores" && (
@@ -498,12 +539,109 @@ function Reportes() {
             </table>
           </div>
         </section>
+         )}
+
+        {/* CALIFICACIÓN DE TUTORES */}
+{tipoReporte === "calificacion-tutores" && (
+  <section className="reporte-tabla">
+    <h2>Calificación de tutores</h2>
+
+    <div className="estudiantes-table-container">
+      <table className="estudiantes-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tutor</th>
+            <th>Materias</th>
+            <th>Promedio de estrellas</th>
+            <th>Total de calificaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {calificacionTutores.length > 0 ? (
+            [...calificacionTutores]
+              .sort(
+                (a, b) =>
+                  Number(b.promedio_estrellas || 0) -
+                  Number(a.promedio_estrellas || 0)
+              )
+              .map((tutor, index) => (
+                <tr key={tutor.id_tutor ?? index}>
+                  <td>{index + 1}</td>
+                  <td className="estudiante-nombre">
+                    {tutor.tutor || tutor.nombre || "Sin nombre"}
+                  </td>
+                  <td>{tutor.materias || "Sin materias"}</td>
+                  <td>
+                    {tutor.promedio_estrellas == null
+                      ? "Sin calificaciones"
+                      : `${Number(tutor.promedio_estrellas).toFixed(2)} / 5`}
+                  </td>
+                  <td>{tutor.total_calificaciones ?? 0}</td>
+                </tr>
+              ))
+          ) : (
+            <tr>
+              <td colSpan="5">No hay calificaciones de tutores disponibles.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
+{/* CALIFICACIÓN DE ESTUDIANTES */}
+{tipoReporte === "calificacion-estudiantes" && (
+  <section className="reporte-tabla">
+    <h2>Calificación de estudiantes</h2>
+
+    <div className="estudiantes-table-container">
+      <table className="estudiantes-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Estudiante</th>
+            <th>Promedio de estrellas recibidas</th>
+            <th>Total de calificaciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {calificacionEstudiantes.length > 0 ? (
+            [...calificacionEstudiantes]
+              .sort(
+                (a, b) =>
+                  Number(b.promedio_estrellas || 0) -
+                  Number(a.promedio_estrellas || 0)
+              )
+              .map((estudiante, index) => (
+                <tr key={estudiante.id_estudiante ?? index}>
+                  <td>{index + 1}</td>
+                  <td className="estudiante-nombre">
+                    {estudiante.estudiante || estudiante.nombre || "Sin nombre"}
+                  </td>
+                  <td>
+                    {estudiante.promedio_estrellas == null
+                      ? "Sin calificaciones"
+                      : `${Number(estudiante.promedio_estrellas).toFixed(2)} / 5`}
+                  </td>
+                  <td>{estudiante.total_calificaciones ?? 0}</td>
+                </tr>
+              ))
+          ) : (
+            <tr>
+              <td colSpan="4">
+                No hay calificaciones de estudiantes disponibles.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </section>
       )}
     </div>
   );
 }
-
-
-
 
 export default Reportes;

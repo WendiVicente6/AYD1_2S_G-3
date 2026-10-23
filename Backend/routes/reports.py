@@ -453,3 +453,159 @@ def reporte_asistencia_cancelacion_materias():
                 "de asistencia y cancelación por materia."
             )
         }), 500
+
+
+# ============================================================
+# REPORTE 9
+# Calificación de tutores realizada por estudiantes
+# ============================================================
+
+@reports_bp.get("/admin/reportes/calificacion-tutores")
+def reporte_calificacion_tutores():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    WITH calificaciones_tutores AS (
+                        SELECT
+                            s.id_tutor,
+                            ROUND(
+                                AVG(c.estrellas)::numeric,
+                                2
+                            ) AS promedio_estrellas,
+                            COUNT(c.id_calificacion)
+                                AS total_calificaciones
+                        FROM tsesion s
+                        INNER JOIN tcalificacion c
+                            ON c.id_sesion = s.id_sesion
+                        WHERE c.autor = 'estudiante'
+                        GROUP BY s.id_tutor
+                    ),
+                    materias_tutores AS (
+                        SELECT
+                            tm.id_tutor,
+                            STRING_AGG(
+                                DISTINCT m.nombre,
+                                ', ' ORDER BY m.nombre
+                            ) AS materias
+                        FROM ttutor_materia tm
+                        INNER JOIN tmateria m
+                            ON m.id_materia = tm.id_materia
+                        GROUP BY tm.id_tutor
+                    )
+                    SELECT
+                        t.id_usuario AS id_tutor,
+                        CONCAT(
+                            u.nombres, ' ', u.apellidos
+                        ) AS tutor,
+                        mt.materias,
+                        ct.promedio_estrellas,
+                        COALESCE(
+                            ct.total_calificaciones, 0
+                        ) AS total_calificaciones
+                    FROM ttutor t
+                    INNER JOIN tusuario u
+                        ON u.id_usuario = t.id_usuario
+                    LEFT JOIN materias_tutores mt
+                        ON mt.id_tutor = t.id_usuario
+                    LEFT JOIN calificaciones_tutores ct
+                        ON ct.id_tutor = t.id_usuario
+                    WHERE u.id_rol = 3
+                      AND u.id_estado_usr = 2
+                      AND u.sn_activo = 1
+                    ORDER BY
+                        ct.promedio_estrellas DESC NULLS LAST,
+                        COALESCE(
+                            ct.total_calificaciones, 0
+                        ) DESC,
+                        tutor ASC;
+                """)
+
+                resultados = cur.fetchall()
+
+        return jsonify({
+            "ok": True,
+            "tutores": resultados
+        }), 200
+
+    except Exception as e:
+        print(
+            "Error en reporte de calificación de tutores:",
+            e
+        )
+        return jsonify({
+            "ok": False,
+            "message": (
+                "No fue posible obtener la calificación de tutores."
+            )
+        }), 500
+ 
+
+# ============================================================
+# REPORTE 10
+# Calificación de estudiantes realizada por tutores
+# ============================================================
+
+
+@reports_bp.get("/admin/reportes/calificacion-estudiantes")
+def reporte_calificacion_estudiantes():
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    WITH calificaciones_estudiantes AS (
+                        SELECT
+                            s.id_estudiante,
+                            ROUND(
+                                AVG(c.estrellas)::numeric,
+                                2
+                            ) AS promedio_estrellas,
+                            COUNT(c.id_calificacion)
+                                AS total_calificaciones
+                        FROM tsesion s
+                        INNER JOIN tcalificacion c
+                            ON c.id_sesion = s.id_sesion
+                        WHERE c.autor = 'tutor'
+                        GROUP BY s.id_estudiante
+                    )
+                    SELECT
+                        u.id_usuario AS id_estudiante,
+                        CONCAT(
+                            u.nombres, ' ', u.apellidos
+                        ) AS estudiante,
+                        ce.promedio_estrellas,
+                        COALESCE(
+                            ce.total_calificaciones, 0
+                        ) AS total_calificaciones
+                    FROM tusuario u
+                    LEFT JOIN calificaciones_estudiantes ce
+                        ON ce.id_estudiante = u.id_usuario
+                    WHERE u.id_rol = 2
+                      AND u.id_estado_usr = 2
+                      AND u.sn_activo = 1
+                    ORDER BY
+                        ce.promedio_estrellas DESC NULLS LAST,
+                        COALESCE(
+                            ce.total_calificaciones, 0
+                        ) DESC,
+                        estudiante ASC;
+                """)
+
+                resultados = cur.fetchall()
+
+        return jsonify({
+            "ok": True,
+            "estudiantes": resultados
+        }), 200
+
+    except Exception as e:
+        print(
+            "Error en reporte de calificación de estudiantes:",
+            e
+        )
+        return jsonify({
+            "ok": False,
+            "message": (
+                "No fue posible obtener la calificación de estudiantes."
+            )
+        }), 500
