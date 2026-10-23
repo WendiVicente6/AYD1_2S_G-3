@@ -78,6 +78,7 @@ function CalificarTutorModal({ sesion, onClose, onSuccess }) {
                 onClick={() => setEstrellas(estrellas === n ? n - 1 : n)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
                 aria-label={`${n} estrellas`}
+                data-testid={`estrella-${n}`}
               >
                 <Star
                   size={28}
@@ -97,6 +98,7 @@ function CalificarTutorModal({ sesion, onClose, onSuccess }) {
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
             placeholder="¿Cómo fue la atención del tutor?"
+            data-testid="comentario-calificacion"
             style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
           />
         </label>
@@ -105,7 +107,7 @@ function CalificarTutorModal({ sesion, onClose, onSuccess }) {
           <button type="button" onClick={onClose} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
             Cancelar
           </button>
-          <button type="submit" disabled={guardando}>
+          <button type="submit" disabled={guardando} data-testid="confirmar-calificacion">
             {guardando ? "Guardando..." : "Confirmar calificación"}
           </button>
         </div>
@@ -175,6 +177,7 @@ function ReportarTutorModal({ sesion, onClose, onSuccess }) {
             onChange={(e) => setIdTipoReporte(e.target.value)}
             disabled={cargandoTipos}
             required
+            data-testid="categoria-reporte"
           >
             <option value="">{cargandoTipos ? "Cargando..." : "Selecciona una categoría"}</option>
             {tipos.map((t) => (
@@ -193,6 +196,7 @@ function ReportarTutorModal({ sesion, onClose, onSuccess }) {
             placeholder="Describe lo ocurrido con el mayor detalle posible..."
             style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
             required
+            data-testid="explicacion-reporte"
           />
         </label>
 
@@ -200,7 +204,7 @@ function ReportarTutorModal({ sesion, onClose, onSuccess }) {
           <button type="button" onClick={onClose} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
             Cancelar
           </button>
-          <button type="submit" disabled={guardando}>
+          <button type="submit" disabled={guardando} data-testid="confirmar-reporte">
             {guardando ? "Enviando..." : "Confirmar reporte"}
           </button>
         </div>
@@ -251,7 +255,7 @@ export default function HistorialSesiones() {
         </div>
       </div>
 
-      {mensajeGlobal && <div className="alert success">{mensajeGlobal}</div>}
+      {mensajeGlobal && <div className="alert success" data-testid="mensaje-exito">{mensajeGlobal}</div>}
       {error && <div className="alert error">{error}</div>}
 
       {loading ? (
@@ -300,19 +304,22 @@ export default function HistorialSesiones() {
                     ) : (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                         {s.ya_calificada ? (
-                          <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "13px", color: "#6b7280" }}>
+                          <span
+                            style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "13px", color: "#6b7280" }}
+                            data-testid="calificacion-estrellas"
+                          >
                             <Star size={14} fill="#f5a623" color="#f5a623" />
                             {s.calificacion_estrellas}
                           </span>
                         ) : (
-                          <button className="text-button" onClick={() => setModalCalificar(s)}>
+                          <button className="text-button" onClick={() => setModalCalificar(s)} data-testid="calificar-tutor">
                             Calificar
                           </button>
                         )}
                         {s.ya_reportada ? (
-                          <span style={{ fontSize: "13px", color: "#6b7280" }}>Reportado</span>
+                          <span style={{ fontSize: "13px", color: "#6b7280" }} data-testid="reportado">Reportado</span>
                         ) : (
-                          <button className="text-button" onClick={() => setModalReportar(s)}>
+                          <button className="text-button" onClick={() => setModalReportar(s)} data-testid="reportar-tutor">
                             Reportar
                           </button>
                         )}
