@@ -200,6 +200,24 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+        path="/students/calificacion"
+        element={
+          <ProtectedRoute role="admin">
+            <Reportes tipoInicial="calificacion-estudiantes" />
+          </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tutors/calificacion"
+          element={
+            <ProtectedRoute role="admin">
+              <Reportes tipoInicial="calificacion-tutores" />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="/register" element={<Register />} />
