@@ -133,16 +133,15 @@ jobs:
 
       - name: Generar archivo .env para el despliegue
         run: |
-          cat > .env << EOF
-          DB_USER=${{ secrets.DB_USER }}
-          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-          DB_NAME=${{ secrets.DB_NAME }}
-          DB_TEST_NAME=${{ secrets.DB_TEST_NAME }}
-          PORT=${{ secrets.PORT }}
-          NODE_ENV=${{ secrets.NODE_ENV }}
-          REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
-          DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
-          TAG=${{ env.TAG }}
+          cat > Backend/.env << 'EOF'
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
+          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          AUTH2_SECRET=${{ secrets.AUTH2_SECRET }}
+          EMAIL_HOST=${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT=${{ secrets.EMAIL_PORT }}
+          EMAIL_USER=${{ secrets.EMAIL_USER }}
+          EMAIL_APP_PASSWORD=${{ secrets.EMAIL_APP_PASSWORD }}
           EOF
 
       - name: Descargar imagenes desde DockerHub
