@@ -16,6 +16,9 @@ env:
   TAG: ${{ github.sha }}
 
 jobs:
+
+  # Ejecuta las pruebas unitarias del backend.
+  # Corre en cualquier push o pull_request, sin importar la rama
   test:
     name: 1. Testing
     runs-on: ubuntu-latest
@@ -32,18 +35,26 @@ jobs:
           cache-dependency-path: 'package-lock.json'
 
       - name: Instalar dependencias del backend
-        working-directory: backend
+        working-directory: Backend
         run: npm ci
 
+      # continue-on-error permite que el pipeline continúe aunque fallen pruebas unitarias, para que el job de reporte final pueda mostrar el resultado completo.
       - name: Ejecutar pruebas unitarias
-        working-directory: backend
+        working-directory: Backend
         run: npm test -- --watchAll=false --coverage
         continue-on-error: true
 
       - name: Mostrar resumen de pruebas
         run: |
           echo "Pruebas ejecutadas. Reporte de cobertura disponible en coverage/"
+      
+      #- name: Ejemplo laboratorio
+       # run: |
+        #  echo "Este paso es solo un ejemplo de laboratorio"
+         # echo "Se puede agregar cualquier comando adicional aquí"      
 
+  
+  
   report:
     name: 2. Resumen Final
     runs-on: ubuntu-latest
