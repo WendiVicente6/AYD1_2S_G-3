@@ -201,7 +201,7 @@ jobs:
       - name: Limpiar entorno
         if: always()
         run: docker compose down
-#
+##
   # JOB 4: DEPLOY  EN AWS EC2 
   # Secrets adicionales necesarios:
   #   EC2_HOST       -> IP publica o Elastic IP de la instancia
