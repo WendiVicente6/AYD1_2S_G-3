@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 
 from conexion.db import get_connection
-from auth import decode_token, get_bearer_token
+from auth import decode_token, get_bearer_token, foto_a_data_uri
 
 students_bp = Blueprint("students", __name__)
 
@@ -70,7 +70,7 @@ def listar_tutores_disponibles():
 
     tutores = []
     for fila in filas:
-        foto_data = bytes(fila["foto"]).decode("utf-8") if fila["foto"] else None
+        foto_data = foto_a_data_uri(fila["foto"])
         tutores.append({
             "id_tutor": fila["id_tutor"],
             "nombre_completo": fila["nombre_completo"],

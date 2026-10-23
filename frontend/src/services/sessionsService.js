@@ -43,12 +43,12 @@ export async function getPendingSessions() {
   return data.sesiones;
 }
 
-export async function attendSession(idSesion, resumen) {
+export async function attendSession(idSesion, { dificultades, recursos }) {
   const token = getToken();
   return apiRequest(`/tutors/sessions/${idSesion}/attend`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ resumen }),
+    body: JSON.stringify({ dificultades, recursos }),
   });
 }
 
@@ -83,6 +83,35 @@ export async function getHistorialSesiones() {
     headers: { Authorization: `Bearer ${token}` },
   });
   return data.sesiones;
+}
+
+// HU-034: el estudiante califica la atención del tutor
+export async function calificarTutor(idSesion, { estrellas, comentario }) {
+  const token = getToken();
+  return apiRequest(`/sesiones/${idSesion}/calificar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ estrellas, comentario }),
+  });
+}
+
+// HU-035: categorías de reporte que aplican a tutores
+export async function getTiposReporteTutor() {
+  const token = getToken();
+  const data = await apiRequest("/tipos-reporte?dirigido_a=tutor", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return data.tipos;
+}
+
+// HU-035: el estudiante reporta al tutor
+export async function reportarTutor(idSesion, { id_tipo_reporte, explicacion }) {
+  const token = getToken();
+  return apiRequest(`/sesiones/${idSesion}/reportar`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ id_tipo_reporte, explicacion }),
+  });
 }
 
 export async function getPlanEstudio(idSesion) {

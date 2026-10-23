@@ -6,7 +6,7 @@
 
   .estudiantes-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: collapse;  
     background: #ffffff;
     border-radius: 10px;
     overflow: hidden;
@@ -88,3 +88,240 @@
   .btn-atras {
     background-color: #e4eae5;
     color: rgb(58, 54, 54);}
+
+    /* Botón para abrir el carnet PDF */
+.btn-ver-pdf {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-ver-pdf:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-ver-pdf:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Contenedor del visor */
+.carnet-pdf-container {
+  margin-top: 24px;
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.carnet-pdf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.carnet-pdf-header h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.carnet-pdf-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.btn-cerrar-pdf {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #475569;
+  cursor: pointer;
+}
+
+.btn-cerrar-pdf:hover {
+  background-color: #334155;
+}
+
+/* Visor incrustado */
+.carnet-pdf-visor {
+  display: block;
+  width: 100%;
+  height: 650px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background-color: #f8fafc;
+}
+
+.pdf-mensaje {
+  padding: 20px;
+  text-align: center;
+  color: #475569;
+}
+
+.pdf-error {
+  padding: 14px;
+  border-radius: 6px;
+  color: #b91c1c;
+  background-color: #fef2f2;
+}
+
+.sin-estudiantes {
+  text-align: center;
+  color: #64748b;
+  padding: 24px !important;
+}
+
+@media (max-width: 768px) {
+  .carnet-pdf-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .carnet-pdf-visor {
+    height: 450px;
+  }
+}
+
+
+/* ==========================================
+   FORMULARIO DE EDICIÓN DE ESTUDIANTES
+   ========================================== */
+
+.form-editar-estudiante {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+  max-width: 900px;
+  margin: 24px 0;
+  padding: 24px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.form-editar-estudiante h3 {
+  grid-column: 1 / -1;
+  margin: 0 0 4px;
+  color: #1e293b;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.form-editar-estudiante > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.form-editar-estudiante label {
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-editar-estudiante input,
+.form-editar-estudiante select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #1e293b;
+  font: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-editar-estudiante input:focus,
+.form-editar-estudiante select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-editar-estudiante .estudiante-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.form-editar-estudiante .estudiante-acciones button {
+  min-height: 40px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.form-editar-estudiante .estudiante-acciones button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-editar-estudiante .estudiante-acciones button[type="submit"] {
+  background: #2563eb;
+  color: #fff;
+}
+
+.form-editar-estudiante .estudiante-acciones button[type="submit"]:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+@media (max-width: 640px) {
+  .form-editar-estudiante {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .form-editar-estudiante h3,
+  .form-editar-estudiante .estudiante-acciones {
+    grid-column: 1;
+  }
+
+  .form-editar-estudiante .estudiante-acciones {
+    flex-direction: column;
+  }
+
+  .form-editar-estudiante .estudiante-acciones button {
+    width: 100%;
+  }
+
+
+}
+
+/* Correo electrónico: campo no editable */
+.form-editar-estudiante label[for="correo"] {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.form-editar-estudiante input#correo:read-only {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+

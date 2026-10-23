@@ -30,7 +30,8 @@ import HistorialSesiones from "./pages/Sesiones/HistorialSesiones";
 import PlanEstudio from "./pages/Sesiones/PlanEstudio";
 import VerTutores from "./pages/Tutores/VerTutores";
 import Reportes from "./pages/Reportes/Reportes";
-
+import ReportesTutores from "./pages/ReportesAdmin/ReportesTutores";
+import ReportesEstudiantes from "./pages/ReportesAdmin/ReportesEstudiantes";
 
 export default function App() {
   return (
@@ -197,6 +198,42 @@ export default function App() {
           element={
             <ProtectedRoute role="tutor">
               <PerfilTutor />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+        path="/students/calificacion"
+        element={
+          <ProtectedRoute role="admin">
+            <Reportes tipoInicial="calificacion-estudiantes" />
+          </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/tutors/calificacion"
+          element={
+            <ProtectedRoute role="admin">
+              <Reportes tipoInicial="calificacion-tutores" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/reportes-tutores"
+          element={
+            <ProtectedRoute role="admin">
+              <ReportesTutores />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/reportes-estudiantes"
+          element={
+            <ProtectedRoute role="admin">
+              <ReportesEstudiantes />
             </ProtectedRoute>
           }
         />

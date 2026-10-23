@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Inbox } from "lucide-react";
+import { Inbox, Plus, Trash2 } from "lucide-react";
 import {
   getPendingSessions,
   attendSession,
@@ -7,9 +7,15 @@ import {
   cancelSession,
 } from "../../services/sessionsService";
 
+const TIPOS_RECURSO = ["Texto", "Video", "PDF", "Ejercicio"];
+
 function formatFecha(fechaISO) {
   const [anio, mes, dia] = fechaISO.split("-");
   return `${dia}/${mes}/${anio}`;
+}
+
+function recursoVacio() {
+  return { nombre: "", tipo: "Texto", descripcion: "" };
 }
 
 const overlayStyle = {
@@ -27,7 +33,8 @@ export default function PendingSessions() {
   const [accionesSesion, setAccionesSesion] = useState(null);
   const [vista, setVista] = useState("menu"); // "menu" | "atender" | "cancelar"
 
-  const [resumen, setResumen] = useState("");
+  const [dificultades, setDificultades] = useState("");
+  const [recursos, setRecursos] = useState([]);
   const [motivoCancelacion, setMotivoCancelacion] = useState("");
   const [errorModal, setErrorModal] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -50,7 +57,8 @@ export default function PendingSessions() {
   function abrirAcciones(sesion) {
     setAccionesSesion(sesion);
     setVista("menu");
-    setResumen("");
+    setDificultades("");
+    setRecursos([]);
     setMotivoCancelacion("");
     setErrorModal("");
   }
@@ -58,9 +66,22 @@ export default function PendingSessions() {
   function cerrarModal() {
     setAccionesSesion(null);
     setVista("menu");
-    setResumen("");
+    setDificultades("");
+    setRecursos([]);
     setMotivoCancelacion("");
     setErrorModal("");
+  }
+
+  function agregarRecurso() {
+    setRecursos((prev) => [...prev, recursoVacio()]);
+  }
+
+  function actualizarRecurso(index, campo, valor) {
+    setRecursos((prev) => prev.map((r, i) => (i === index ? { ...r, [campo]: valor } : r)));
+  }
+
+  function quitarRecurso(index) {
+    setRecursos((prev) => prev.filter((_, i) => i !== index));
   }
 
   function actualizarEstado(idSesion, nuevoEstado) {
@@ -92,14 +113,28 @@ export default function PendingSessions() {
     e.preventDefault();
     setErrorModal("");
 
-    if (!resumen.trim()) {
-      setErrorModal("El resumen de la sesión es obligatorio.");
+    if (!dificultades.trim()) {
+      setErrorModal("Las dificultades identificadas son obligatorias.");
       return;
+    }
+
+    for (const r of recursos) {
+      if (!r.nombre.trim() || !r.tipo || !r.descripcion.trim()) {
+        setErrorModal("Cada recurso recomendado debe tener nombre, tipo y descripción de uso.");
+        return;
+      }
     }
 
     setGuardando(true);
     try {
-      const result = await attendSession(accionesSesion.id_sesion, resumen.trim());
+      const result = await attendSession(accionesSesion.id_sesion, {
+        dificultades: dificultades.trim(),
+        recursos: recursos.map((r) => ({
+          nombre: r.nombre.trim(),
+          tipo: r.tipo,
+          descripcion: r.descripcion.trim(),
+        })),
+      });
       setMensajeGlobal(result.message);
       quitarSesion(accionesSesion.id_sesion);
       cerrarModal();
@@ -222,18 +257,85 @@ export default function PendingSessions() {
             )}
 
             {vista === "atender" && (
-              <form onSubmit={confirmarAtencion} className="registration-form" style={{ gridTemplateColumns: "1fr" }}>
+              <form onSubmit={confirmarAtencion} className="registration-form" style={{ gridTemplateColumns: "1fr", maxHeight: "70vh", overflowY: "auto" }}>
                 <label>
-                  Resumen de la sesión
+                  Dificultades identificadas
                   <textarea
-                    rows={4}
-                    value={resumen}
-                    onChange={(e) => setResumen(e.target.value)}
-                    placeholder="Temas cubiertos, recomendaciones, próximos pasos..."
+                    rows={3}
+                    value={dificultades}
+                    onChange={(e) => setDificultades(e.target.value)}
+                    placeholder="Temas donde el estudiante presentó dificultad..."
                     style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
                     required
                   />
                 </label>
+
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                    <strong style={{ fontSize: "13px" }}>Recursos recomendados</strong>
+                    <button
+                      type="button"
+                      onClick={agregarRecurso}
+                      disabled={guardando}
+                      className="text-button"
+                      style={{ display: "flex", alignItems: "center", gap: "4px" }}
+                    >
+                      <Plus size={14} /> Agregar recurso
+                    </button>
+                  </div>
+
+                  {recursos.length === 0 && (
+                    <p className="muted-text" style={{ margin: 0 }}>
+                      Opcional. Puedes agregar uno o más recursos (texto, video, PDF, ejercicio) para guiar al estudiante.
+                    </p>
+                  )}
+
+                  {recursos.map((recurso, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        border: "1px solid #e5e7eb", borderRadius: "8px", padding: "12px",
+                        marginBottom: "10px", display: "flex", flexDirection: "column", gap: "8px",
+                      }}
+                    >
+                      <div style={{ display: "flex", gap: "8px" }}>
+                        <input
+                          value={recurso.nombre}
+                          onChange={(e) => actualizarRecurso(index, "nombre", e.target.value)}
+                          placeholder="Nombre del recurso"
+                          style={{ flex: 1, padding: "9px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit" }}
+                          required
+                        />
+                        <select
+                          value={recurso.tipo}
+                          onChange={(e) => actualizarRecurso(index, "tipo", e.target.value)}
+                          style={{ padding: "9px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit" }}
+                        >
+                          {TIPOS_RECURSO.map((t) => (
+                            <option key={t} value={t}>{t}</option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => quitarRecurso(index)}
+                          disabled={guardando}
+                          aria-label="Quitar recurso"
+                          style={{ background: "transparent", color: "#c0392b", padding: "0 6px" }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                      <textarea
+                        rows={2}
+                        value={recurso.descripcion}
+                        onChange={(e) => actualizarRecurso(index, "descripcion", e.target.value)}
+                        placeholder="Descripción de uso: cómo debe aprovechar este recurso el estudiante..."
+                        style={{ padding: "9px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
+                        required
+                      />
+                    </div>
+                  ))}
+                </div>
 
                 <div style={{ display: "flex", gap: "10px" }}>
                   <button type="button" onClick={() => setVista("menu")} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>

@@ -1,12 +1,60 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Response
 from conexion.db import get_connection
 
 admin_tutor_bp = Blueprint("admin_tutor", __name__)
 
 
-# ==========================================
-# OBTENER TUTORES PENDIENTES
-# ==========================================
+@admin_tutor_bp.get("/tutores/<int:id_usuario>/cv-pdf")
+def obtener_cv_pdf_tutor(id_usuario):
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT t.cv_pdf, t.cv_pdf_nombre
+                    FROM ttutor t
+                    JOIN tusuario u
+                        ON u.id_usuario = t.id_usuario
+                    WHERE u.id_usuario = %s
+                      AND u.id_rol = 3
+                      AND u.id_estado_usr = 1;
+                """, (id_usuario,))
+
+                documento = cur.fetchone()
+
+                if not documento or not documento["cv_pdf"]:
+                    return jsonify({
+                        "ok": False,
+                        "message": "No se encontró el PDF del CV del tutor."
+                    }), 404
+
+                pdf_bytes = bytes(documento["cv_pdf"])
+                nombre_pdf = documento["cv_pdf_nombre"] or "cv_tutor.pdf"
+                nombre_pdf = (
+                    nombre_pdf
+                    .replace('"', "")
+                    .replace("\r", "")
+                    .replace("\n", "")
+                )
+
+                return Response(
+                    pdf_bytes,
+                    mimetype="application/pdf",
+                    headers={
+                        "Content-Disposition": (
+                            f'inline; filename="{nombre_pdf}"'
+                        ),
+                        "X-Content-Type-Options": "nosniff"
+                    }
+                )
+
+    except Exception as e:
+        print("Error al obtener el CV del tutor:", e)
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible obtener el PDF del CV."
+        }), 500
+
 
 @admin_tutor_bp.get("/tutores-pendientes")
 def tutores_pendientes():
@@ -19,16 +67,20 @@ def tutores_pendientes():
                         u.nombres,
                         u.apellidos,
                         u.carnet,
+                        u.carnet_pdf_nombre,
                         u.genero,
                         u.direccion,
                         u.telefono,
                         u.fec_nac,
                         u.correo,
                         u.id_estado_usr,
-                        e.txt_desc AS estado
+                        e.txt_desc AS estado,
+                        t.cv_pdf_nombre
                     FROM tusuario u
                     JOIN testado_usr e
                         ON e.id_estado_usr = u.id_estado_usr
+                    LEFT JOIN ttutor t
+                        ON t.id_usuario = u.id_usuario
                     WHERE u.id_rol = 3
                       AND u.id_estado_usr = 1
                     ORDER BY u.id_usuario;
@@ -50,20 +102,14 @@ def tutores_pendientes():
         }), 500
 
 
-# ==========================================
-# APROBAR TUTOR
-# ==========================================
-
 @admin_tutor_bp.patch("/tutores/<int:id_usuario>/aprobar")
 def aprobar_tutor(id_usuario):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-
                 cur.execute("""
                     UPDATE tusuario
-                    SET
-                        id_estado_usr = 2,
+                    SET id_estado_usr = 2,
                         sn_activo = 1
                     WHERE id_usuario = %s
                       AND id_rol = 3
@@ -72,8 +118,7 @@ def aprobar_tutor(id_usuario):
                         id_usuario,
                         nombres,
                         apellidos,
-                        id_estado_usr,
-                        sn_activo;
+                        id_estado_usr;
                 """, (id_usuario,))
 
                 tutor = cur.fetchone()
@@ -101,20 +146,14 @@ def aprobar_tutor(id_usuario):
         }), 500
 
 
-# ==========================================
-# RECHAZAR TUTOR
-# ==========================================
-
 @admin_tutor_bp.patch("/tutores/<int:id_usuario>/rechazar")
 def rechazar_tutor(id_usuario):
     try:
         with get_connection() as conn:
             with conn.cursor() as cur:
-
                 cur.execute("""
                     UPDATE tusuario
-                    SET
-                        id_estado_usr = 4,
+                    SET id_estado_usr = 4,
                         sn_activo = 0
                     WHERE id_usuario = %s
                       AND id_rol = 3
@@ -123,8 +162,7 @@ def rechazar_tutor(id_usuario):
                         id_usuario,
                         nombres,
                         apellidos,
-                        id_estado_usr,
-                        sn_activo;
+                        id_estado_usr;
                 """, (id_usuario,))
 
                 tutor = cur.fetchone()
@@ -150,9 +188,7 @@ def rechazar_tutor(id_usuario):
             "ok": False,
             "message": "No fue posible rechazar al tutor."
         }), 500
-
-
-
+    
 
 @admin_tutor_bp.get("/tutores")
 def tutores_activos():
@@ -171,10 +207,13 @@ def tutores_activos():
                         u.fec_nac,
                         u.correo,
                         u.id_estado_usr,
-                        e.txt_desc AS estado
+                        e.txt_desc AS estado,
+                        t.cv_pdf_nombre
                     FROM tusuario u
                     JOIN testado_usr e
                         ON e.id_estado_usr = u.id_estado_usr
+                    LEFT JOIN ttutor t
+                        ON t.id_usuario = u.id_usuario
                     WHERE u.id_rol = 3
                       AND u.id_estado_usr = 2
                     ORDER BY u.id_usuario;
@@ -196,6 +235,119 @@ def tutores_activos():
         }), 500
 
 
+
+@admin_tutor_bp.put("/tutores/<int:id_usuario>")
+def actualizar_tutor(id_usuario):
+    try:
+        from flask import request
+
+        datos = request.get_json(silent=True)
+
+        if not isinstance(datos, dict):
+            return jsonify({
+                "ok": False,
+                "message": "Los datos enviados no son válidos."
+            }), 400
+
+        campos = [
+            "nombres",
+            "apellidos",
+            "carnet",
+            "genero",
+            "direccion",
+            "telefono",
+            "fec_nac",
+            "correo",
+        ]
+
+        # Validar que se hayan enviado todos los campos requeridos.
+        faltantes = [
+            campo for campo in campos
+            if campo not in datos
+            or datos[campo] is None
+            or not str(datos[campo]).strip()
+        ]
+
+        if faltantes:
+            return jsonify({
+                "ok": False,
+                "message": (
+                    "Todos los campos son obligatorios. "
+                    "Revise: " + ", ".join(faltantes)
+                )
+            }), 400
+
+        valores = {
+            campo: str(datos[campo]).strip()
+            for campo in campos
+        }
+
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE tusuario
+                    SET
+                        nombres = %s,
+                        apellidos = %s,
+                        carnet = %s,
+                        genero = %s,
+                        direccion = %s,
+                        telefono = %s,
+                        fec_nac = %s::date,
+                        correo = %s
+                    WHERE id_usuario = %s
+                      AND id_rol = 3
+                      AND id_estado_usr = 2
+                    RETURNING
+                        id_usuario,
+                        nombres,
+                        apellidos,
+                        carnet,
+                        genero,
+                        direccion,
+                        telefono,
+                        fec_nac,
+                        correo,
+                        id_estado_usr;
+                """, (
+                    valores["nombres"],
+                    valores["apellidos"],
+                    valores["carnet"],
+                    valores["genero"],
+                    valores["direccion"],
+                    valores["telefono"],
+                    valores["fec_nac"],
+                    valores["correo"],
+                    id_usuario,
+                ))
+
+                tutor = cur.fetchone()
+
+                if not tutor:
+                    return jsonify({
+                        "ok": False,
+                        "message": (
+                            "El tutor no existe o no está activo."
+                        )
+                    }), 404
+
+                conn.commit()
+
+                return jsonify({
+                    "ok": True,
+                    "message": "Tutor actualizado correctamente.",
+                    "tutor": tutor,
+                }), 200
+
+    except Exception as e:
+        print("Error al actualizar tutor:", repr(e))
+
+        return jsonify({
+            "ok": False,
+            "message": "No fue posible actualizar los datos del tutor."
+        }), 500
+
+
 @admin_tutor_bp.patch("/tutores/<int:id_usuario>/baja")
 def dar_baja_tutor(id_usuario):
     try:
@@ -203,8 +355,7 @@ def dar_baja_tutor(id_usuario):
             with conn.cursor() as cur:
                 cur.execute("""
                     UPDATE tusuario
-                    SET
-                        id_estado_usr = 3,
+                    SET id_estado_usr = 3,
                         sn_activo = 0
                     WHERE id_usuario = %s
                       AND id_rol = 3
@@ -240,3 +391,8 @@ def dar_baja_tutor(id_usuario):
             "ok": False,
             "message": "No fue posible dar de baja al tutor."
         }), 500
+
+
+
+
+

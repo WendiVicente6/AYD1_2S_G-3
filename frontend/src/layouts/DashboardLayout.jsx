@@ -4,7 +4,7 @@ import Topbar from "../components/Topbar/Topbar";
 
 export default function DashboardLayout() {
   return (
-    <div className="app-shell">
+    <div data-testid="dashboard" className="app-shell">
       <Sidebar />
       <main className="main-content">
         <Topbar />

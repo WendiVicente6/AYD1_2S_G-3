@@ -296,6 +296,10 @@ def get_pending_sessions():
     except Error:
         return jsonify({"ok": False, "message": "No fue posible consultar las sesiones pendientes."}), 500
 
+TIPOS_RECURSO_VALIDOS = ("Texto", "Video", "PDF", "Ejercicio")
+
+
+# HU-036: Registrar plan de estudio estructurado al atender estudiante (actualiza HU-023)
 @sessions_bp.put("/tutors/sessions/<int:id_sesion>/attend")
 def attend_session(id_sesion):
     token = get_bearer_token()
@@ -312,10 +316,34 @@ def attend_session(id_sesion):
     id_tutor = int(payload["sub"])
 
     body = request.get_json(silent=True) or {}
-    resumen = (body.get("resumen") or "").strip()
+    dificultades = (body.get("dificultades") or "").strip()
+    recursos = body.get("recursos") or []
 
-    if not resumen:
-        return jsonify({"ok": False, "message": "El resumen de la sesión es obligatorio."}), 400
+    if not dificultades:
+        return jsonify({"ok": False, "message": "Las dificultades identificadas son obligatorias."}), 400
+
+    if not isinstance(recursos, list):
+        return jsonify({"ok": False, "message": "recursos debe ser una lista."}), 400
+
+    recursos_limpios = []
+    for recurso in recursos:
+        nombre_recurso = str((recurso or {}).get("nombre") or "").strip()
+        tipo_recurso = str((recurso or {}).get("tipo") or "").strip()
+        descripcion_uso = str((recurso or {}).get("descripcion") or "").strip()
+
+        if not nombre_recurso or not tipo_recurso or not descripcion_uso:
+            return jsonify({
+                "ok": False,
+                "message": "Cada recurso recomendado debe tener nombre, tipo y descripción de uso."
+            }), 400
+
+        if tipo_recurso not in TIPOS_RECURSO_VALIDOS:
+            return jsonify({
+                "ok": False,
+                "message": f"Tipo de recurso inválido: '{tipo_recurso}'. Debe ser uno de {', '.join(TIPOS_RECURSO_VALIDOS)}."
+            }), 400
+
+        recursos_limpios.append((nombre_recurso, tipo_recurso, descripcion_uso))
 
     try:
         with get_connection() as conn:
@@ -344,12 +372,26 @@ def attend_session(id_sesion):
                 cur.execute(
                     """
                     UPDATE tsesion
-                    SET resumen = %s,
-                        id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Completada')
+                    SET id_estado_sesion = (SELECT id_estado_sesion FROM testado_sesion WHERE txt_desc = 'Completada')
                     WHERE id_sesion = %s
                     """,
-                    (resumen, id_sesion),
+                    (id_sesion,),
                 )
+
+                cur.execute(
+                    "INSERT INTO tplan_estudio (id_sesion, dificultades) VALUES (%s, %s) RETURNING id_plan",
+                    (id_sesion, dificultades),
+                )
+                id_plan = cur.fetchone()["id_plan"]
+
+                for orden, (nombre_recurso, tipo_recurso, descripcion_uso) in enumerate(recursos_limpios, start=1):
+                    cur.execute(
+                        """
+                        INSERT INTO trecurso_plan (id_plan, nombre_recurso, tipo_recurso, descripcion_uso, orden)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (id_plan, nombre_recurso, tipo_recurso, descripcion_uso, orden),
+                    )
             conn.commit()
 
         return jsonify({"ok": True, "message": "Sesión marcada como atendida correctamente."})
@@ -586,12 +628,22 @@ def historial_sesiones():
                         u.nombres AS tutor_nombres,
                         u.apellidos AS tutor_apellidos,
                         t.dir_tutoria,
-                        es.txt_desc AS estado_raw
+                        es.txt_desc AS estado_raw,
+                        tc.estrellas AS calificacion_estrellas,
+                        (tc.id_calificacion IS NOT NULL) AS ya_calificada,
+                        EXISTS (
+                            SELECT 1 FROM treporte r
+                            WHERE r.id_sesion = s.id_sesion
+                              AND r.autor = 'estudiante'
+                        ) AS ya_reportada
                     FROM tsesion s
                     JOIN tmateria m ON m.id_materia = s.id_materia
                     JOIN tusuario u ON u.id_usuario = s.id_tutor
                     JOIN ttutor t ON t.id_usuario = s.id_tutor
                     JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+                    LEFT JOIN tcalificacion tc
+                        ON tc.id_sesion = s.id_sesion
+                       AND tc.autor = 'estudiante'
                     WHERE s.id_estudiante = %s
                       AND es.txt_desc IN ('Completada', 'Cancelada')
                     ORDER BY s.fec_sesion DESC
@@ -618,11 +670,166 @@ def historial_sesiones():
                 "motivo": row["motivo"],
                 "resumen": row["resumen"] if row["estado_raw"] == "Completada" else None,
                 "estado": estado,
+                "ya_calificada": row["ya_calificada"],
+                "calificacion_estrellas": row["calificacion_estrellas"],
+                "ya_reportada": row["ya_reportada"],
             })
 
         return jsonify({"ok": True, "sesiones": sesiones})
     except Error:
         return jsonify({"ok": False, "message": "No fue posible consultar el historial."}), 500
+
+
+# ============================================================
+# HU-034: Calificar atención de tutoría (estudiante -> tutor)
+# ============================================================
+
+def validar_estrellas(estrellas):
+    """True si es un entero entre 0 y 5 (bool no cuenta como entero)."""
+    return isinstance(estrellas, int) and not isinstance(estrellas, bool) and 0 <= estrellas <= 5
+
+
+def _autenticar_estudiante(accion):
+    """Devuelve (id_estudiante, None) o (None, respuesta_de_error).
+    accion: 'calificar' o 'reportar', para el mensaje de error."""
+    token = get_bearer_token()
+    if not token:
+        return None, (jsonify({"ok": False, "message": "No autenticado."}), 401)
+    try:
+        payload = decode_token(token)
+    except Exception:
+        return None, (jsonify({"ok": False, "message": "Token inválido o expirado."}), 401)
+
+    if payload.get("role") != "student":
+        return None, (jsonify({"ok": False, "message": f"Solo los estudiantes pueden {accion} a un tutor."}), 403)
+
+    return int(payload["sub"]), None
+
+
+def _verificar_sesion_atendida(cur, id_sesion, id_estudiante, accion):
+    """Devuelve None si la sesión es del estudiante y está Completada (Atendida),
+    o la respuesta de error si no."""
+    cur.execute(
+        """
+        SELECT es.txt_desc AS estado
+        FROM tsesion s
+        JOIN testado_sesion es ON es.id_estado_sesion = s.id_estado_sesion
+        WHERE s.id_sesion = %s AND s.id_estudiante = %s
+        """,
+        (id_sesion, id_estudiante),
+    )
+    sesion = cur.fetchone()
+
+    if sesion is None:
+        return jsonify({"ok": False, "message": "La sesión no existe o no te pertenece."}), 404
+
+    if sesion["estado"] != "Completada":
+        return jsonify({
+            "ok": False,
+            "message": f"Solo puedes {accion} sesiones atendidas. Las sesiones canceladas o activas no se pueden {accion}.",
+        }), 409
+
+    return None
+
+
+@sessions_bp.post("/sesiones/<int:id_sesion>/calificar")
+def calificar_tutor(id_sesion):
+    id_estudiante, error_response = _autenticar_estudiante("calificar")
+    if error_response:
+        return error_response
+
+    body = request.get_json(silent=True) or {}
+    estrellas = body.get("estrellas")
+    comentario = (body.get("comentario") or "").strip()
+
+    if not validar_estrellas(estrellas):
+        return jsonify({"ok": False, "message": "La calificación debe ser un número entero entre 0 y 5."}), 400
+    if len(comentario) > 300:
+        return jsonify({"ok": False, "message": "El comentario no puede superar los 300 caracteres."}), 400
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                error_response = _verificar_sesion_atendida(cur, id_sesion, id_estudiante, "calificar")
+                if error_response:
+                    return error_response
+
+                cur.execute(
+                    "SELECT 1 FROM tcalificacion WHERE id_sesion = %s AND autor = 'estudiante'",
+                    (id_sesion,),
+                )
+                if cur.fetchone():
+                    return jsonify({"ok": False, "message": "Ya calificaste esta sesión."}), 409
+
+                cur.execute(
+                    """
+                    INSERT INTO tcalificacion (id_sesion, estrellas, comentario, autor)
+                    VALUES (%s, %s, %s, 'estudiante')
+                    """,
+                    (id_sesion, estrellas, comentario or None),
+                )
+            conn.commit()
+
+        return jsonify({"ok": True, "message": "¡Gracias! Tu calificación fue registrada."}), 201
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible registrar la calificación."}), 500
+
+
+# ============================================================
+# HU-035: Reportar a un tutor (estudiante -> tutor)
+# ============================================================
+
+@sessions_bp.post("/sesiones/<int:id_sesion>/reportar")
+def reportar_tutor(id_sesion):
+    id_estudiante, error_response = _autenticar_estudiante("reportar")
+    if error_response:
+        return error_response
+
+    body = request.get_json(silent=True) or {}
+    id_tipo_reporte = body.get("id_tipo_reporte")
+    explicacion = (body.get("explicacion") or "").strip()
+
+    if not isinstance(id_tipo_reporte, int) or isinstance(id_tipo_reporte, bool):
+        return jsonify({"ok": False, "message": "Debes seleccionar una categoría de reporte."}), 400
+    if not explicacion:
+        return jsonify({"ok": False, "message": "La explicación del reporte es obligatoria."}), 400
+    if len(explicacion) > 500:
+        return jsonify({"ok": False, "message": "La explicación no puede superar los 500 caracteres."}), 400
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor() as cur:
+                error_response = _verificar_sesion_atendida(cur, id_sesion, id_estudiante, "reportar")
+                if error_response:
+                    return error_response
+
+                # La categoría debe existir y ser de las que aplican a tutores
+                cur.execute(
+                    "SELECT 1 FROM ttipo_reporte WHERE id_tipo_reporte = %s AND dirigido_a = 'tutor'",
+                    (id_tipo_reporte,),
+                )
+                if not cur.fetchone():
+                    return jsonify({"ok": False, "message": "Categoría de reporte inválida."}), 400
+
+                cur.execute(
+                    "SELECT 1 FROM treporte WHERE id_sesion = %s AND autor = 'estudiante'",
+                    (id_sesion,),
+                )
+                if cur.fetchone():
+                    return jsonify({"ok": False, "message": "Ya reportaste esta sesión."}), 409
+
+                cur.execute(
+                    """
+                    INSERT INTO treporte (id_sesion, id_tipo_reporte, explicacion, autor)
+                    VALUES (%s, %s, %s, 'estudiante')
+                    """,
+                    (id_sesion, id_tipo_reporte, explicacion),
+                )
+            conn.commit()
+
+        return jsonify({"ok": True, "message": "Tu reporte fue enviado al administrador."}), 201
+    except Error:
+        return jsonify({"ok": False, "message": "No fue posible registrar el reporte."}), 500
 
 
 # HU-032  Ver plan de estudio (estudiante)

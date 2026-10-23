@@ -7,7 +7,7 @@ const ETIQUETA_TIPO = {
   Texto: { label: "Texto", color: "#374151", bg: "#f3f4f6" },
   Video: { label: "Video", color: "#7c2d12", bg: "#ffedd5" },
   PDF: { label: "PDF", color: "#991b1b", bg: "#fee2e2" },
-  Enlace: { label: "Enlace", color: "#1e40af", bg: "#dbeafe" },
+  Ejercicio: { label: "Ejercicio", color: "#065f46", bg: "#d1fae5" },
 };
 
 function formatearFecha(fecha) {
@@ -45,10 +45,14 @@ export default function PlanEstudio() {
   }
 
   return (
-    <section>
+    <section data-testid="plan-estudio">
       <div className="page-heading">
         <div>
-          <Link to="/student/historial" style={{ display: "inline-block", marginBottom: "8px" }}>
+          <Link
+            to="/student/historial"
+            data-testid="volver-historial"
+            style={{ display: "inline-block", marginBottom: "8px" }}
+          >
             ← Volver al historial
           </Link>
           <h2>Plan de estudio</h2>
@@ -58,6 +62,7 @@ export default function PlanEstudio() {
         {plan && (
           <button
             type="button"
+            data-testid="descargar-pdf"
             onClick={handleDescargarPdf}
             disabled={generandoPdf}
             style={{
@@ -83,7 +88,7 @@ export default function PlanEstudio() {
       {loading ? (
         <p>Cargando...</p>
       ) : !plan ? (
-        <article className="empty-page">
+        <article className="empty-page" data-testid="plan-vacio">
           <h2>Aún no tienes un plan de estudio</h2>
           <p>Tu tutor todavía no ha registrado un plan para esta sesión.</p>
         </article>
@@ -146,7 +151,7 @@ export default function PlanEstudio() {
             {plan.recursos.length === 0 ? (
               <p style={{ margin: 0, color: "#9ca3af" }}>El tutor no registró recursos para esta sesión.</p>
             ) : (
-              <ul style={{ listStyle: "disc", paddingLeft: "22px", margin: 0 }}>
+              <ul style={{ listStyle: "disc", paddingLeft: "22px", margin: 0 }} data-testid="recursos-lista">
                 {plan.recursos.map((r) => {
                   const etiqueta = ETIQUETA_TIPO[r.tipo_recurso] || { label: r.tipo_recurso, color: "#374151", bg: "#f3f4f6" };
                   return (

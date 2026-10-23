@@ -41,6 +41,15 @@ const LINKS_BY_ROLE = {
           to: "/students/approve",
           label: "Aprobar Estudiantes",
         },
+        {
+        to: "/students/calificacion",
+        label: "Calificación de estudiantes",
+        },
+        
+        {
+        to: "/admin/reportes-estudiantes",
+        label: "Reportes de estudiantes",
+        },
       ],
     },
 
@@ -57,6 +66,14 @@ const LINKS_BY_ROLE = {
           to: "/tutors/approve",
           label: "Aprobar Tutores",
         },
+        {
+        to: "/tutors/calificacion",
+        label: "Calificación de tutores",
+      },
+      {
+        to: "/admin/reportes-tutores",
+        label: "Reportes de tutores",
+      },
       ],
     },
 
@@ -162,7 +179,7 @@ export default function Sidebar() {
     tutores: false,
   });
 
-  const role = user?.role;
+   const role = user?.role;
   const links = LINKS_BY_ROLE[role] || [];
   const roleLabel = ROLE_LABELS[role] || "Usuario";
 
@@ -206,6 +223,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                data-testid={`menu-${item.label.toLowerCase().replaceAll(" ", "-")}`}
                 className={({ isActive }) =>
                   `nav-item ${isActive ? "active" : ""}`
                 }
@@ -251,6 +269,8 @@ export default function Sidebar() {
                     <NavLink
                       key={child.to}
                       to={child.to}
+                      data-testid={`menu-${item.label.toLowerCase().replaceAll(" ", "-")}`}
+
                       className={({ isActive }) =>
                         `submenu-item ${isActive ? "active" : ""}`
                       }
@@ -292,6 +312,7 @@ export default function Sidebar() {
         </div>
 
         <button
+          data-testid="logout"
           className="logout-button"
           id="logout-button"
           name="logout-button"
