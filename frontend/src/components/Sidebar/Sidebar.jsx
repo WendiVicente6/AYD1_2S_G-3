@@ -41,6 +41,10 @@ const LINKS_BY_ROLE = {
           to: "/students/approve",
           label: "Aprobar Estudiantes",
         },
+        {
+        to: "/students/calificacion",
+        label: "Calificación de estudiantes",
+        },
       ],
     },
 
@@ -57,6 +61,10 @@ const LINKS_BY_ROLE = {
           to: "/tutors/approve",
           label: "Aprobar Tutores",
         },
+        {
+        to: "/tutors/calificacion",
+        label: "Calificación de tutores",
+      },
       ],
     },
 
