@@ -11,7 +11,14 @@ on:
       - develop
   workflow_dispatch:
 
+env:
+  # TAG usa el SHA del commit para identificar unicamente cada imagen
+  TAG: ${{ github.sha }}
+
 jobs:
+
+  # Ejecuta las pruebas unitarias del backend.
+  # Corre en cualquier push o pull_request, sin importar la rama
   test:
     name: 1. Testing
     runs-on: ubuntu-latest
@@ -28,22 +35,104 @@ jobs:
           cache-dependency-path: 'package-lock.json'
 
       - name: Instalar dependencias del backend
-        working-directory: backend
+        working-directory: Backend
         run: npm ci
 
+      # continue-on-error permite que el pipeline continúe aunque fallen pruebas unitarias, para que el job de reporte final pueda mostrar el resultado completo.
       - name: Ejecutar pruebas unitarias
-        working-directory: backend
+        working-directory: Backend
         run: npm test -- --watchAll=false --coverage
         continue-on-error: true
 
       - name: Mostrar resumen de pruebas
         run: |
           echo "Pruebas ejecutadas. Reporte de cobertura disponible en coverage/"
+      
+      #- name: Ejemplo laboratorio
+       # run: |
+        #  echo "Este paso es solo un ejemplo de laboratorio"
+         # echo "Se puede agregar cualquier comando adicional aquí"      
 
+  # Construye las imagenes Docker del backend y frontend
+  # y las sube a DockerHub con dos tags:
+  #   - :latest        -> siempre apunta a la ultima version
+  #   - :<github.sha>  -> tag unico e inmutable por commit
+  #
+  # Condicion: solo corre en push a main o develop (no en PRs).
+  # Depende de: test
+  
+  # JOB 4: DEPLOY  EN AWS EC2 
+  # Secrets adicionales necesarios:
+  #   EC2_HOST       -> IP publica o Elastic IP de la instancia
+  #   EC2_USERNAME   -> usuario SSH, normalmente "ubuntu" en Ubuntu AMIs
+  #   EC2_SSH_KEY    -> clave privada PEM completa (cat my-key.pem)
+  # deploy-aws:
+  #   name: 4. Deploy a AWS EC2
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-push
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   environment:
+  #     name: production
+  #     url: http://3.211.201.56
+  
+  #   steps:
+  #     - name: Checkout codigo
+  #       uses: actions/checkout@v4
+  
+  #     - name: Generar archivo .env
+  #       run: |
+  #         cat > .env << EOF
+  #         DB_USER=${{ secrets.DB_USER }}
+  #         DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+  #         DB_NAME=${{ secrets.DB_NAME }}
+  #         PORT=${{ secrets.PORT }}
+  #         NODE_ENV=production
+  #         DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}
+  #         TAG=${{ env.TAG }}
+  #         EOF
+  
+  #     - name: Copiar archivos al servidor EC2
+  #       uses: appleboy/scp-action@v0.1.7
+  #       with:
+  #         host: ${{ secrets.EC2_HOST }}
+  #         username: ${{ secrets.EC2_USERNAME }}
+  #         key: ${{ secrets.EC2_SSH_KEY }}
+  #         source: ".,!node_modules,!**/node_modules"
+  #         target: "/home/${{ secrets.EC2_USERNAME }}/app"
+  
+  #     - name: Desplegar en EC2 via SSH
+  #       uses: appleboy/ssh-action@v1.0.3
+  #       with:
+  #         host: ${{ secrets.EC2_HOST }}
+  #         username: ${{ secrets.EC2_USERNAME }}
+  #         key: ${{ secrets.EC2_SSH_KEY }}
+  #         script: |
+  #           cd /home/${{ secrets.EC2_USERNAME }}/app
+  #           # Iniciar sesion en DockerHub para bajar imagenes
+  #           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+  #           # Bajar las imagenes nuevas
+  #           docker compose pull
+
+  #           # Levantar contenedores y limpiar los anteriores
+  #           docker compose up -d --remove-orphans
+
+  #           # Limpiar imagenes viejas para no llenar el disco
+  #           docker image prune -f
+  #     - name: Verificar que la app este respondiendo
+  #       run: |
+  #         sleep 20
+  #         curl -f http://${{ secrets.EC2_HOST }}:3000/health || echo "Revisar manualmente en http://${{ secrets.EC2_HOST }}"      
+
+
+  # JOB 5: REPORTE FINAL
+  # Resume el estado de todos los jobs anteriores.
+  # Se ejecuta siempre (if: always()), incluso si alguno fallo,
+  # para tener visibilidad del resultado completo del pipeline.
   report:
-    name: 2. Resumen Final
+    name: 5. Resumen Final
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [test, build-and-push, deploy-simulated]
     if: always()
 
     steps:
@@ -52,10 +141,29 @@ jobs:
           echo "=========================================="
           echo "REPORTE DEL PIPELINE CI/CD"
           echo "Rama   : ${{ github.ref_name }}"
+          echo "Commit : ${{ env.TAG }}"
           echo "=========================================="
+
           if [ "${{ needs.test.result }}" = "success" ]; then
-            echo "TEST     : OK"
+            echo "TEST       : OK"
           else
-            echo "TEST     : FALLO"
+            echo "TEST       : FALLO"
           fi
+
+          if [ "${{ needs.build-and-push.result }}" = "success" ]; then
+            echo "BUILD/PUSH : OK"
+          elif [ "${{ needs.build-and-push.result }}" = "skipped" ]; then
+            echo "BUILD/PUSH : OMITIDO (solo corre en push a main/develop)"
+          else
+            echo "BUILD/PUSH : FALLO"
+          fi
+
+          if [ "${{ needs.deploy-simulated.result }}" = "success" ]; then
+            echo "DEPLOY     : OK"
+          elif [ "${{ needs.deploy-simulated.result }}" = "skipped" ]; then
+            echo "DEPLOY     : OMITIDO (solo corre en push a main)"
+          else
+            echo "DEPLOY     : FALLO"
+          fi
+
           echo "=========================================="
