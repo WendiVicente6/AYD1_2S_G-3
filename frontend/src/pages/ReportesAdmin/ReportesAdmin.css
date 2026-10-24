@@ -1,0 +1,68 @@
+
+.reportes-admin {
+  width: 100%;
+  padding: 24px;
+  color: #1f2937;
+}
+
+.reportes-admin h1 {
+  margin-bottom: 8px;
+}
+
+.ra-tabla-contenedor {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+.ra-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.ra-tabla th,
+.ra-tabla td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ra-tabla th {
+  background: #f3f4f6;
+  white-space: nowrap;
+}
+
+.ra-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ra-acciones button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+}
+
+.ra-acciones .ra-baja {
+  background: #b91c1c;
+}
+
+.ra-mensaje {
+  padding: 10px;
+  color: #166534;
+  background: #dcfce7;
+  border-radius: 6px;
+}
+
+.ra-error {
+  padding: 10px;
+  color: #991b1b;
+  background: #fee2e2;
+  border-radius: 6px;
+}

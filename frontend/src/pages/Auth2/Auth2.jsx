@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../../services/api";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 export default function Auth2() {
   const [archivo, setArchivo] = useState(null);
@@ -46,9 +45,7 @@ export default function Auth2() {
         return;
       }
 
-      navigate("/dashboard");
-      /*navigate("/dashboard");*/
-      navigate("/admin/dashboard", { replace: true });
+     navigate("/admin/dashboard", { replace: true });
     } catch (error) {
       setError("No se pudo conectar con el servidor");
     } finally {

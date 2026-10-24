@@ -17,7 +17,7 @@ from routes.tutor import tutor_sessions_bp
 from routes.adminstudent import admin_bp
 from routes.admintutor import admin_tutor_bp
 from routes.reports import reports_bp
-
+from routes.adminreports import admin_reports_bp
 
 
 
@@ -35,7 +35,7 @@ CORS(
             )
         }
     }
-)
+)z
 
 
 # Configuración JWT
@@ -110,6 +110,12 @@ app.register_blueprint(
 app.register_blueprint(
     materias_bp
 )
+
+app.register_blueprint(
+    admin_reports_bp,
+    url_prefix="/api/admin"
+)
+
 # Ruta para comprobar que el backend funciona
 @app.get("/api/health")
 def health():
