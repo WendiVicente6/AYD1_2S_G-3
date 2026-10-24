@@ -1,5 +1,12 @@
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const apiUrlPrueba = new URLSearchParams(
+  window.location.search
+).get("apiUrl");
+
+export const API_URL =
+  apiUrlPrueba ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:5000/api";
 
 export async function apiRequest(path, options = {}) {
   const token = sessionStorage.getItem("educonnect_token");
@@ -21,7 +28,9 @@ export async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     const error = new Error(
-      data.message || `Ocurrió un error (${response.status}).`
+      data.message ||
+        data.error ||
+        `Ocurrió un error (${response.status}).`
     );
 
     error.status = response.status;
