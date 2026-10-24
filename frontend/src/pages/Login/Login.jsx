@@ -37,7 +37,7 @@ export default function Login() {
       //console.log("USUARIO DESDE LOGIN:", user);
       //console.log("ROL:", user.role);
 
-      if (user.role === "admin") {
+      if (user.role === "admin" && import.meta.env.VITE_DEMO_MODE === "false") {
         navigate("/auth2", { replace: true });
       } else {
         navigate(
@@ -120,6 +120,18 @@ export default function Login() {
           </button>
 
         </form>
+
+        {import.meta.env.VITE_DEMO_MODE !== "false" && (
+          <div style={{ marginTop: 20, padding: 14, background: "#eff6ff", borderRadius: 10, fontSize: 13 }}>
+            <strong>Demostración para evaluación</strong>
+            <p style={{ margin: "5px 0 9px" }}>Contraseña de todas las cuentas: <b>Demo12345!</b></p>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[ ["Admin", "admin@demo.com"], ["Tutor", "tutor@demo.com"], ["Estudiante", "estudiante@demo.com"] ].map(([role, email]) => (
+                <button key={role} type="button" style={{ width: "auto", padding: "7px 10px", background: "#1e40af", fontSize: 12 }} onClick={() => { setCorreo(email); setPassword("Demo12345!"); }}>{role}</button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <p className="login-note">
           ¿No tienes una cuenta?
