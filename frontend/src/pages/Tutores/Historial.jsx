@@ -69,7 +69,7 @@ function CalificarModal({ sesion, onClose, onSuccess }) {
 
   return (
     <ModalOverlay onClose={onClose}>
-      <h2 style={{ marginTop: 0 }}>Calificar a {sesion.estudiante}</h2>
+      <h2 style={{ marginTop: 0 }} data-testid="modal-calificar">Calificar a {sesion.estudiante}</h2>
       <p>{formatFecha(sesion.fecha)} · {sesion.hora}</p>
 
       {error && <div className="alert error">{error}</div>}
@@ -85,6 +85,7 @@ function CalificarModal({ sesion, onClose, onSuccess }) {
                 onClick={() => setEstrellas(n)}
                 style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0 }}
                 aria-label={`${n} estrellas`}
+                data-testid={`estrella-${n}`}
               >
                 <Star
                   size={28}
@@ -103,6 +104,7 @@ function CalificarModal({ sesion, onClose, onSuccess }) {
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
             placeholder="Cómo fue la sesión con este estudiante..."
+            data-testid="comentario-calificacion"
             style={{ padding: "11px", border: "1px solid #d1d5db", borderRadius: "8px", font: "inherit", resize: "vertical" }}
           />
         </label>
@@ -111,7 +113,7 @@ function CalificarModal({ sesion, onClose, onSuccess }) {
           <button type="button" onClick={onClose} disabled={guardando} style={{ background: "#e5e7eb", color: "#111827" }}>
             Cancelar
           </button>
-          <button type="submit" disabled={guardando}>
+          <button type="submit" disabled={guardando} data-testid="confirmar-calificacion">
             {guardando ? "Guardando..." : "Confirmar calificación"}
           </button>
         </div>
@@ -247,7 +249,7 @@ export default function Historial() {
         </div>
       </div>
 
-      {mensajeGlobal && <div className="alert success">{mensajeGlobal}</div>}
+      {mensajeGlobal && <div className="alert success" data-testid="mensaje-exito">{mensajeGlobal}</div>}
       {error && <div className="alert error">{error}</div>}
 
       {loading ? (
@@ -275,7 +277,7 @@ export default function Historial() {
               </thead>
               <tbody>
                 {sesiones.map((s) => (
-                  <tr key={s.id_sesion}>
+                  <tr key={s.id_sesion} data-testid="fila-sesion">
                     <td>{formatFecha(s.fecha)}</td>
                     <td>{s.hora}</td>
                     <td>{s.estudiante}</td>
@@ -286,16 +288,16 @@ export default function Historial() {
                       {s.estado === "Completada" ? (
                         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                           {s.ya_calificada ? (
-                            <span style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "13px", color: "#6b7280" }}>
+                            <span data-testid="calificacion-estrellas" style={{ display: "flex", alignItems: "center", gap: "2px", fontSize: "13px", color: "#6b7280" }}>
                               <Star size={14} fill="#f5a623" color="#f5a623" />
                               {s.calificacion_estrellas}
                             </span>
                           ) : (
-                            <button className="text-button" onClick={() => setModalCalificar(s)}>
+                            <button className="text-button" data-testid="btn-calificar" onClick={() => setModalCalificar(s)}>
                               Calificar
                             </button>
                           )}
-                          <button className="text-button" onClick={() => setModalReportar(s)}>
+                          <button className="text-button" data-testid="btn-reportar" onClick={() => setModalReportar(s)}>
                             Reportar
                           </button>
                         </div>
