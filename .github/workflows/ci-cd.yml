@@ -165,7 +165,7 @@ jobs:
 
       - name: Verificar salud del Backend
         run: |
-          if curl -f -s http://localhost:3000/health; then
+          if curl -f -s http://localhost:5000/api/health; then
             echo "Backend respondiendo correctamente"
           else
             echo "Backend no responde al healthcheck"
