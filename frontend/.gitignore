@@ -28,3 +28,4 @@ dist-ssr
 cypress/downloads/
 cypress/videos/
 cypress/screenshots/
+.vercel
