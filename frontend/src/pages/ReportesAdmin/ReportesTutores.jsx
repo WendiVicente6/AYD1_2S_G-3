@@ -19,6 +19,18 @@ export default function ReportesTutores() {
 
     try {
       const data = await getReportesTutores();
+
+console.log("Respuesta completa de getReportesTutores:", data);
+
+console.table(
+  (data.reportes || []).map((r) => ({
+    id: r.id_reporte,
+    tutor: r.reportado,
+    estado: r.estado_gestion,
+  }))
+);
+
+
       setReportes(data.reportes || []);
     } catch (e) {
       setError(e.message || "No fue posible cargar los reportes.");

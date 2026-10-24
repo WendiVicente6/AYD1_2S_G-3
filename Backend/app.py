@@ -35,7 +35,7 @@ CORS(
             )
         }
     }
-)
+)z
 
 
 # Configuración JWT
