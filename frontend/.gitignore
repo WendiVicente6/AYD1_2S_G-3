@@ -27,4 +27,4 @@ dist-ssr
 # Cypress (resultados locales de las pruebas E2E)
 cypress/downloads/
 cypress/videos/
-cypress/screenshots/
+cypress/screenshots/.vercel/
