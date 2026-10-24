@@ -180,16 +180,12 @@ jobs:
             echo "Frontend no responde al healthcheck"
           fi
 
-      - name: Probar endpoint de usuarios
+      - name: Probar endpoint de login (Simulado)
         run: |
-          echo "Creando usuario de prueba..."
-          docker compose exec -T backend curl -s -X POST \
+          echo "Probando login con credenciales incorrectas..."
+          curl -s -X POST http://localhost:5000/api/login \
             -H "Content-Type: application/json" \
-            -d '{"name":"Test User","email":"test@ci.com","age":25}' \
-            http://localhost:3000/api/users
-
-          echo "Listando usuarios..."
-          docker compose exec -T backend curl -s http://localhost:3000/api/users
+            -d '{"correo": "ana@educonnect.com", "password": "ClaveIncorrecta"}'
 
       - name: Resumen del despliegue
         run: |
